@@ -9,78 +9,89 @@ Replace code below according to your needs.
 from typing import TYPE_CHECKING
 
 from magicgui import magic_factory
-from qtpy.QtWidgets import QHBoxLayout, QPushButton, QWidget
-from napari.types import ImageData, LayerDataTuple
+from napari.types import LayerDataTuple
+from napari.layers import Image
+from napari import Viewer
 import numpy as np
 import pandas as pd
+# import napari_clusters_plotter
+# from napari_clusters_plotter._plotter import PlotterWidget
+
+from phasor import get_phasor_components
+from filters import make_time_mask, make_space_mask_from_manual_threshold
+from filters import apply_median_filter
 
 if TYPE_CHECKING:
     import napari
 
-# Uses the `autogenerate: true` flag in the plugin manifest
-# to indicate it should be wrapped as a magicgui to autogenerate
-# a widget.
+def connect_events(widget):
+    def toggle_median_n_widget(event):
+        widget.median_n.visible = event
+    # Connect events
+    widget.apply_median.changed.connect(toggle_median_n_widget)
+    # Intial visibility states
+    widget.median_n.visible = False
 
-def get_phasor_components(flim_data, harmonic=1):
-    '''
-    Calculate phasor components G and S from the fourier transform
-    '''
-    import numpy as np
-    flim_data_fft = np.fft.fft(flim_data, axis=0)
-    dc = flim_data_fft[0].real
-    # change the zeros to the img average
-    # dc = np.where(dc != 0, dc, int(np.mean(dc)))
-    dc = np.where(dc != 0, dc, 1)
-    g = flim_data_fft[harmonic].real
-    g = g / dc
-    s = abs(flim_data_fft[harmonic].imag)
-    s /= dc
-    return g, s, dc
-
-def create_time_array(frequency, n_points=100):
-    '''
-    Create time array from laser frequency
+@magic_factory(widget_init=connect_events)
+def make_flim_label_layer(image_layer : Image,
+                          harmonic : int = 1,
+                          threshold : int = 0,
+                          apply_median : bool = False,
+                          median_n : int = 1,
+                          napari_viewer : Viewer = None) -> LayerDataTuple:
+    from skimage.segmentation import relabel_sequential
+    image = image_layer.data
+    laser_frequency = image_layer.metadata['TTResult_SyncRate'] *1E-6 #MHz
     
-    Parameters
-    ----------
-    frequency: float
-        Frquency of the pulsed laser (in MHz)
-    n_points: int, optional
-        The number of samples collected between each aser shooting
-    Returns
-    -------
-    time_array : array
-        Time array (in nanoseconds)
-    '''
-    import numpy as np
-    time_window = 1 / (frequency * 10**6)
-    time_window_ns = time_window * 10**9 # in nanoseconds
-    time_step = time_window_ns / n_points # ns
-    array = np.arange(0, n_points)
-    time_array = array * time_step
-    return time_array
-
-
-def make_flim_label_layer(image : ImageData, laser_frequency : float, harmonic : int = 1, threshold : int = 0, apply_median : bool = False, viewer=None) -> LayerDataTuple:
+    time_mask = make_time_mask(image, laser_frequency)
     
-    # create time array based on laser frequency
-    time_array = create_time_array(laser_frequency, n_points = image.shape[0])
-    time_step = time_array[1]
-    # choose starting index based on maximum value of image histogram
-    heights, bin_edges = np.histogram(np.ravel(np.argmax(image, axis=0) * time_step), bins=time_array)
-    start_index = np.argmax(heights[1:]) + 1
+    space_mask = make_space_mask_from_manual_threshold(image, threshold)
     
-    time_mask = time_array >= time_array[start_index]
+    image = image[time_mask]
     
-    g, s, dc = get_phasor_components(image[time_mask], harmonic = harmonic)
+    if apply_median:
+        image = apply_median_filter(image, median_n)
+    
+    g, s, dc = get_phasor_components(image, harmonic = harmonic)
 
     label_image = np.arange(dc.shape[0]*dc.shape[1]).reshape(dc.shape) + 1
+    label_image[~space_mask] = 0
+    label_image = relabel_sequential(label_image)[0]
 
-    phasor_components = {'label': np.ravel(label_image), 'G': np.ravel(g), 'S': np.ravel(s)}
+    phasor_components = {'label': np.ravel(label_image[space_mask]), 
+                         'G': np.ravel(g[space_mask]),
+                         'S': np.ravel(s[space_mask])}
     table = pd.DataFrame(phasor_components)
     
+    napari_viewer.add_labels(label_image,
+                             name='Label_' + image_layer.name,
+                             features=table)
     
-    return (label_image, {'features' : table}, 'labels')
+    _, plotter_widget = napari_viewer.window.add_plugin_dock_widget(
+        'napari-clusters-plotter',
+        widget_name='Plotter Widget')
+    
+    plotter_widget.update_axes_list()
+    plotter_widget.plot_x_axis.setCurrentText('G')
+    plotter_widget.plot_y_axis.setCurrentText('S')
+    
+    # Add a decorator to run to always plot the phasor plot below
+    add_phasor_circle(plotter_widget.graphics_widget.axes)
+    # Not working below
+    plotter_widget.run(table,'G','S')
+    
+    return (label_image, {'name' : 'Label_' + image_layer.name,
+                          'features' : table}, 'labels')
 
-def example_function_widget(img_layer: "napari.layers.Image"):
-    print(f"you have selected {img_layer}")
+
+def add_phasor_circle(ax):
+    '''
+    Generate FLIM universal semi-circle plot
+    '''
+    import numpy as np
+    import matplotlib.pyplot as plt
+    angles = np.linspace(0, np.pi, 180)
+    x =(np.cos(angles) + 1) / 2
+    y = np.sin(angles) / 2
+    ax.plot(x,y, 'gray', alpha=0.3)
+    return ax

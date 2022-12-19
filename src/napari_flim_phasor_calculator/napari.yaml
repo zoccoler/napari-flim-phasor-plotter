@@ -14,12 +14,11 @@ contributions:
   readers:
     - command: napari-flim-phasor-calculator.get_reader
       accepts_directories: false
-      filename_patterns: ['*.npy']
+      filename_patterns: ['*.ptu']
   sample_data:
     - command: napari-flim-phasor-calculator.make_sample_data
       display_name: FLIM phasor calculator
       key: unique_id.1
   widgets:
     - command: napari-flim-phasor-calculator.make_func_widget
-      autogenerate: true
       display_name: Make FLIM Label Layer

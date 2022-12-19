@@ -6,7 +6,7 @@ implement multiple readers or even other plugin contributions. see:
 https://napari.org/stable/plugins/guides.html?#readers
 """
 import numpy as np
-
+from napari_flim_phasor_calculator._io.readPTU_FLIM import PTUreader
 
 def napari_get_reader(path):
     """A basic implementation of a Reader contribution.
@@ -27,10 +27,6 @@ def napari_get_reader(path):
         # if it is a list, it is assumed to be an image stack...
         # so we are only going to look at the first file.
         path = path[0]
-
-    # if we know we cannot read the file, we immediately return None.
-    if not path.endswith(".npy"):
-        return None
 
     # otherwise we return the *function* that can read ``path``.
     return reader_function
@@ -60,13 +56,15 @@ def reader_function(path):
     """
     # handle both a string and a list of strings
     paths = [path] if isinstance(path, str) else path
-    # load all files into array
-    arrays = [np.load(_path) for _path in paths]
-    # stack arrays into single array
-    data = np.squeeze(np.stack(arrays))
-
-    # optional kwargs for the corresponding viewer.add_* method
-    add_kwargs = {}
-
-    layer_type = "image"  # optional, default is "image"
-    return [(data, add_kwargs, layer_type)]
+    layer_data = []
+    for path in paths:
+        ptu_file = PTUreader(path, print_header_data = False)
+        data, _ = ptu_file.get_flim_data_stack()
+        # Move xy dimensions to the end
+        # TO DO: handle 3D images
+        data = np.moveaxis(data, [0, 1], [-2, -1])
+        # optional kwargs for the corresponding viewer.add_* method
+        add_kwargs = {'channel_axis': 0, 'metadata': ptu_file.head}
+        layer_type = "image"
+        layer_data.append((data, add_kwargs, layer_type))
+    return layer_data
