@@ -9,7 +9,7 @@ contributions:
       python_name: napari_flim_phasor_calculator._sample_data:make_sample_data
       title: Load sample data from FLIM phasor calculator
     - id: napari-flim-phasor-calculator.make_func_widget
-      python_name: napari_flim_phasor_calculator._widget:make_flim_label_layer
+      python_name: napari_flim_phasor_calculator._widget:make_flim_phasor_plot
       title: Make FLIM Label Layer
   readers:
     - command: napari-flim-phasor-calculator.get_reader
@@ -21,4 +21,4 @@ contributions:
       key: unique_id.1
   widgets:
     - command: napari-flim-phasor-calculator.make_func_widget
-      display_name: Make FLIM Label Layer
+      display_name: Make FLIM Phasor Plot

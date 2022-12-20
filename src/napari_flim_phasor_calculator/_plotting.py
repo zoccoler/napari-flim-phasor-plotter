@@ -1,4 +1,5 @@
 from napari_clusters_plotter._plotter import PlotterWidget
+from qtpy.QtCore import QSize
 
 def add_phasor_circle(ax):
     '''
@@ -27,20 +28,18 @@ def add_2d_histogram(ax, x, y):
 class PhasorPlotterWidget(PlotterWidget):
     def __init__(self, napari_viewer):
         super().__init__(napari_viewer)
-
+        self.setMinimumSize(QSize(100,300))
     def run(self,
             features,
             plot_x_axis_name,
             plot_y_axis_name,
             plot_cluster_name=None,
             redraw_cluster_image=True,):
-         
-        super().run(features,
-                    plot_x_axis_name,
-                    plot_y_axis_name,
-                    plot_cluster_name,
-                    redraw_cluster_image,)
-        print('Now I also print this')
+        super().run(features=features,
+                    plot_x_axis_name=plot_x_axis_name,
+                    plot_y_axis_name=plot_y_axis_name,
+                    plot_cluster_name=plot_cluster_name,
+                    redraw_cluster_image=redraw_cluster_image,)
         add_phasor_circle(self.graphics_widget.axes)
         self.graphics_widget.draw()
         # To Do: Add 2d histogram

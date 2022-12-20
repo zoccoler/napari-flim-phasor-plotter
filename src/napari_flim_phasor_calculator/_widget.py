@@ -10,24 +10,25 @@ from typing import TYPE_CHECKING
 
 from magicgui import magic_factory
 from napari.types import LayerDataTuple
-from napari.layers import Image
+from napari.layers import Image, Labels
 from napari import Viewer
 import numpy as np
 import pandas as pd
 # import napari_clusters_plotter
 
 
-from phasor import get_phasor_components
-from filters import make_time_mask, make_space_mask_from_manual_threshold
-from filters import apply_median_filter
-from _plotting import PhasorPlotterWidget
+from .phasor import get_phasor_components
+from .filters import make_time_mask, make_space_mask_from_manual_threshold
+from .filters import apply_median_filter
+from ._plotting import PhasorPlotterWidget
 
 if TYPE_CHECKING:
     import napari
 
-
-
 def connect_events(widget):
+    '''
+    Connect widget events to make some visible/invisible depending on others
+    '''
     def toggle_median_n_widget(event):
         widget.median_n.visible = event
     # Connect events
@@ -36,12 +37,12 @@ def connect_events(widget):
     widget.median_n.visible = False
 
 @magic_factory(widget_init=connect_events)
-def make_flim_label_layer(image_layer : Image,
+def make_flim_phasor_plot(image_layer : Image,
                           harmonic : int = 1,
                           threshold : int = 0,
                           apply_median : bool = False,
                           median_n : int = 1,
-                          napari_viewer : Viewer = None) -> LayerDataTuple:
+                          napari_viewer : Viewer = None) -> None:
     from skimage.segmentation import relabel_sequential
     image = image_layer.data
     laser_frequency = image_layer.metadata['TTResult_SyncRate'] *1E-6 #MHz
@@ -66,19 +67,44 @@ def make_flim_label_layer(image_layer : Image,
                          'S': np.ravel(s[space_mask])}
     table = pd.DataFrame(phasor_components)
     
+    # The layer has to be created here so the plotter can be filled properly
+    # below. Overwrite layer if it already exists.
+    for layer in napari_viewer.layers:
+        if (isinstance(layer, Labels)) & (layer.name=='Label_' + image_layer.name): 
+            labels_layer = layer
+            labels_layer.data = label_image
+            labels_layer.features = table
+            break
+    else:
+        labels_layer = napari_viewer.add_labels(label_image,
+                                    name = 'Label_' + image_layer.name,
+                                    features = table)
+    
     # Check if plotter was alrerady added to dock_widgets
-    dock_widgets_names = [key for key, valye in napari_viewer.window._dock_widgets.items()]
+    dock_widgets_names = [key for key, value in napari_viewer.window._dock_widgets.items()]
     if 'Plotter Widget' not in dock_widgets_names:
         plotter_widget = PhasorPlotterWidget(napari_viewer)
         napari_viewer.window.add_dock_widget(plotter_widget, name = 'Plotter Widget')
+    else:
+        widgets = napari_viewer.window._dock_widgets['Plotter Widget']
+        plotter_widget = widgets.findChild(PhasorPlotterWidget)
         # If we were to use the original plotter, we could add it as below
         # _, plotter_widget = napari_viewer.window.add_plugin_dock_widget(
         #     'napari-clusters-plotter',
         #     widget_name='Plotter Widget')
-        plotter_widget.plot_x_axis.setCurrentText('G')
-        plotter_widget.plot_y_axis.setCurrentText('S')
-        plotter_widget.update_axes_list() 
-    return (label_image, {'name' : 'Label_' + image_layer.name,
-                          'features' : table}, 'labels')
+    # Set G and S as features to plot (update_axes_list method clears Comboboxes)
+    plotter_widget.update_axes_list() 
+    plotter_widget.plot_x_axis.setCurrentIndex(1)
+    plotter_widget.plot_y_axis.setCurrentIndex(2)
+    # Show parent (PlotterWidget) so that run function can run properly
+    plotter_widget.parent().show()
+    # Disconnect selector to reset collection of points in plotter
+    # (it gets reconnected when 'run' method is run)
+    plotter_widget.graphics_widget.selector.disconnect()
+    plotter_widget.run(labels_layer.features,
+                       plotter_widget.plot_x_axis.currentText(),
+                       plotter_widget.plot_y_axis.currentText())
+
+    return 
 
 
