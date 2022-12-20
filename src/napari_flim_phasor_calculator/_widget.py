@@ -15,14 +15,17 @@ from napari import Viewer
 import numpy as np
 import pandas as pd
 # import napari_clusters_plotter
-# from napari_clusters_plotter._plotter import PlotterWidget
+
 
 from phasor import get_phasor_components
 from filters import make_time_mask, make_space_mask_from_manual_threshold
 from filters import apply_median_filter
+from _plotting import PhasorPlotterWidget
 
 if TYPE_CHECKING:
     import napari
+
+
 
 def connect_events(widget):
     def toggle_median_n_widget(event):
@@ -63,35 +66,19 @@ def make_flim_label_layer(image_layer : Image,
                          'S': np.ravel(s[space_mask])}
     table = pd.DataFrame(phasor_components)
     
-    napari_viewer.add_labels(label_image,
-                             name='Label_' + image_layer.name,
-                             features=table)
-    
-    _, plotter_widget = napari_viewer.window.add_plugin_dock_widget(
-        'napari-clusters-plotter',
-        widget_name='Plotter Widget')
-    
-    plotter_widget.update_axes_list()
-    plotter_widget.plot_x_axis.setCurrentText('G')
-    plotter_widget.plot_y_axis.setCurrentText('S')
-    
-    # Add a decorator to run to always plot the phasor plot below
-    add_phasor_circle(plotter_widget.graphics_widget.axes)
-    # Not working below
-    plotter_widget.run(table,'G','S')
-    
+    # Check if plotter was alrerady added to dock_widgets
+    dock_widgets_names = [key for key, valye in napari_viewer.window._dock_widgets.items()]
+    if 'Plotter Widget' not in dock_widgets_names:
+        plotter_widget = PhasorPlotterWidget(napari_viewer)
+        napari_viewer.window.add_dock_widget(plotter_widget, name = 'Plotter Widget')
+        # If we were to use the original plotter, we could add it as below
+        # _, plotter_widget = napari_viewer.window.add_plugin_dock_widget(
+        #     'napari-clusters-plotter',
+        #     widget_name='Plotter Widget')
+        plotter_widget.plot_x_axis.setCurrentText('G')
+        plotter_widget.plot_y_axis.setCurrentText('S')
+        plotter_widget.update_axes_list() 
     return (label_image, {'name' : 'Label_' + image_layer.name,
                           'features' : table}, 'labels')
 
 
-def add_phasor_circle(ax):
-    '''
-    Generate FLIM universal semi-circle plot
-    '''
-    import numpy as np
-    import matplotlib.pyplot as plt
-    angles = np.linspace(0, np.pi, 180)
-    x =(np.cos(angles) + 1) / 2
-    y = np.sin(angles) / 2
-    ax.plot(x,y, 'gray', alpha=0.3)
-    return ax

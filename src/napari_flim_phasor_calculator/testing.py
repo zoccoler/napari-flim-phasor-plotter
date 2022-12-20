@@ -25,16 +25,35 @@ viewer.open("C:/Users/mazo260d/Desktop/Conni_BiA_PoL/copied_for_Marcelo/single_i
 widget = make_flim_label_layer()
 
 viewer.window.add_dock_widget(widget)
-
+# Run make labels layer
 widget()
 
-dw_plotter_widget, plotter_widget = viewer.window.add_plugin_dock_widget('napari-clusters-plotter',
-                                      widget_name='Plotter Widget')
+# dw_plotter_widget, plotter_widget = viewer.window.add_plugin_dock_widget('napari-clusters-plotter',
+#                                       widget_name='Plotter Widget')
 
 # plotter_widget.update_axes_list()
 # plotter_widget.plot_x_axis.setCurrentText('G')
 # plotter_widget.plot_y_axis.setCurrentText('S')
 
-# plotter_widget.run
+
+
+# def add_phasor_circle(ax):
+#     '''
+#     Generate FLIM universal semi-circle plot
+#     '''
+#     import numpy as np
+#     import matplotlib.pyplot as plt
+#     angles = np.linspace(0, np.pi, 180)
+#     x =(np.cos(angles) + 1) / 2
+#     y = np.sin(angles) / 2
+#     ax.plot(x,y, 'yellow', alpha=0.3)
+#     return ax
+
+# add_phasor_circle(plotter_widget.graphics_widget.axes)
+
+# plotter_widget.run(viewer.layers[-1].features,'G','S')
+# print('plotted')
+
+# plotter_widget.graphics_widget.fig.canvas.draw()
 
 
