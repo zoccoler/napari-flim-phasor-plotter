@@ -14,6 +14,7 @@ from napari.layers import Image, Labels
 from napari import Viewer
 import numpy as np
 import pandas as pd
+from qtpy.QtWidgets import QWidget
 # import napari_clusters_plotter
 
 
@@ -35,9 +36,11 @@ def connect_events(widget):
     widget.apply_median.changed.connect(toggle_median_n_widget)
     # Intial visibility states
     widget.median_n.visible = False
+    widget.laser_frequency.label = 'Laser Frequency (MHz)'
 
 @magic_factory(widget_init=connect_events)
 def make_flim_phasor_plot(image_layer : Image,
+                          laser_frequency : float = 40,
                           harmonic : int = 1,
                           threshold : int = 0,
                           apply_median : bool = False,
@@ -45,7 +48,8 @@ def make_flim_phasor_plot(image_layer : Image,
                           napari_viewer : Viewer = None) -> None:
     from skimage.segmentation import relabel_sequential
     image = image_layer.data
-    laser_frequency = image_layer.metadata['TTResult_SyncRate'] *1E-6 #MHz
+    if 'TTResult_SyncRate' in image_layer.metadata:
+        laser_frequency = image_layer.metadata['TTResult_SyncRate'] *1E-6 #MHz
     
     time_mask = make_time_mask(image, laser_frequency)
     
@@ -104,6 +108,13 @@ def make_flim_phasor_plot(image_layer : Image,
     plotter_widget.run(labels_layer.features,
                        plotter_widget.plot_x_axis.currentText(),
                        plotter_widget.plot_y_axis.currentText())
+    
+    # Update laser frequency spinbox
+    # To Do: access and update widget in a better way
+    if 'Make FLIM Phasor Plot (napari-flim-phasor-calculator)' in dock_widgets_names:
+        widgets = napari_viewer.window._dock_widgets['Make FLIM Phasor Plot (napari-flim-phasor-calculator)']
+        laser_frequency_spinbox = widgets.children()[4].children()[2].children()[-1]
+        laser_frequency_spinbox.setValue(laser_frequency)
 
     return 
 

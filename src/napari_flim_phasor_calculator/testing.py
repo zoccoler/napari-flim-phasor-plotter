@@ -6,54 +6,31 @@ Created on Mon Dec 19 09:11:43 2022
 """
 
 import napari
-from magicgui import magicgui
-from napari_flim_phasor_calculator._widget import make_flim_label_layer
-import types
+from napari_flim_phasor_calculator._widget import make_flim_phasor_plot
+from napari_flim_phasor_calculator._synthetic import create_time_array, make_synthetic_flim_data
 viewer = napari.Viewer()
-viewer.open("C:/Users/mazo260d/Desktop/Conni_BiA_PoL/copied_for_Marcelo/single_image/raw_FLIM_data/single_FLIM_image.ptu",
-            plugin="napari-flim-phasor-calculator")
 
-# image = viewer.layers[0].data[:, 120:130, 260:290]
+laser_frequency = 60 # MHz
+amplitude = 1
+tau_list = [0.1, 0.2, 0.5, 1, 2, 5, 10, 25, 40] # ns
+number_of_harmonics = 5
+number_of_time_points = 1000
 
-# viewer.add_image(image, metadata = viewer.layers[0].metadata)
-
-# viewer.layers.pop()
-# viewer.layers.pop()
-
-
-
-widget = make_flim_label_layer()
-
-viewer.window.add_dock_widget(widget)
-# Run make labels layer
-widget()
-
-# dw_plotter_widget, plotter_widget = viewer.window.add_plugin_dock_widget('napari-clusters-plotter',
-#                                       widget_name='Plotter Widget')
-
-# plotter_widget.update_axes_list()
-# plotter_widget.plot_x_axis.setCurrentText('G')
-# plotter_widget.plot_y_axis.setCurrentText('S')
+time_array = create_time_array(laser_frequency, number_of_time_points)
+flim_data = make_synthetic_flim_data(time_array, amplitude, tau_list)
+flim_data = flim_data.reshape(number_of_time_points, 3, 3)
 
 
+layer = viewer.add_image(flim_data, rgb = False)#, metadata={'TTResult_SyncRate': 39100000})
 
-# def add_phasor_circle(ax):
-#     '''
-#     Generate FLIM universal semi-circle plot
-#     '''
-#     import numpy as np
-#     import matplotlib.pyplot as plt
-#     angles = np.linspace(0, np.pi, 180)
-#     x =(np.cos(angles) + 1) / 2
-#     y = np.sin(angles) / 2
-#     ax.plot(x,y, 'yellow', alpha=0.3)
-#     return ax
+# this time, our widget will be a MagicFactory or FunctionGui instance
+my_widget = make_flim_phasor_plot()
 
-# add_phasor_circle(plotter_widget.graphics_widget.axes)
+viewer.window.add_plugin_dock_widget(plugin_name = 'napari-flim-phasor-calculator',
+                                     widget_name='Make FLIM Phasor Plot')
 
-# plotter_widget.run(viewer.layers[-1].features,'G','S')
-# print('plotted')
+# if we "call" this object, it'll execute our function
+my_widget(layer, laser_frequency = laser_frequency, threshold = 30)
 
-# plotter_widget.graphics_widget.fig.canvas.draw()
 
 

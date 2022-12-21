@@ -1,27 +1,5 @@
 import numpy as np
 
-def create_time_array(frequency, n_points=100):
-    '''
-    Create time array from laser frequency
-    
-    Parameters
-    ----------
-    frequency: float
-        Frequency of the pulsed laser (in MHz)
-    n_points: int, optional
-        The number of samples collected between each aser shooting
-    Returns
-    -------
-    time_array : array
-        Time array (in nanoseconds)
-    '''
-    time_window = 1 / (frequency * 10**6)
-    time_window_ns = time_window * 10**9 # in nanoseconds
-    time_step = time_window_ns / n_points # ns
-    array = np.arange(0, n_points)
-    time_array = array * time_step
-    return time_array
-
 def make_time_mask(image, laser_frequency):
     '''
     Create a time mask from the image histogram maximum onwards
@@ -37,6 +15,7 @@ def make_time_mask(image, laser_frequency):
     time_mask : boolean array
         Time mask
     '''
+    from napari_flim_phasor_calculator._synthetic import create_time_array
     # create time array based on laser frequency
     time_array = create_time_array(laser_frequency, n_points = image.shape[0])
     time_step = time_array[1]
