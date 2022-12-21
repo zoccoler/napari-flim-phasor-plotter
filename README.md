@@ -15,7 +15,7 @@ A napari plugin to generate a phasor plot for TCSPC FLIM data.
 
 Open a raw TCSPC FLIM image in napari and call the plugin from the Plugins menu. Specify the laser frequency, which harmonic and a threshold for the phasor plot. Optionally, apply median filters. Below is a demonstration:
 
-<img src="https://github.com/zoccoler/napari-flim-phasor-calculator/raw/main/figures/napari_FLIM_phasor_calculator_Demo.gif" width="700"/>
+![](https://github.com/zoccoler/napari-flim-phasor-calculator/raw/main/images/napari_FLIM_phasor_calculator_Demo.gif)
 
 Manually draw curves on the plot to get the corresponding pixels highlighted in a new labels layer. Hold 'SHIFT' while drawing to add more than two colors.
 
