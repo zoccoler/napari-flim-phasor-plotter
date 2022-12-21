@@ -9,78 +9,113 @@ Replace code below according to your needs.
 from typing import TYPE_CHECKING
 
 from magicgui import magic_factory
-from qtpy.QtWidgets import QHBoxLayout, QPushButton, QWidget
-from napari.types import ImageData, LayerDataTuple
+from napari.types import LayerDataTuple
+from napari.layers import Image, Labels
+from napari import Viewer
 import numpy as np
 import pandas as pd
+from qtpy.QtWidgets import QWidget
+# import napari_clusters_plotter
+
+
+from .phasor import get_phasor_components
+from .filters import make_time_mask, make_space_mask_from_manual_threshold
+from .filters import apply_median_filter
+from ._plotting import PhasorPlotterWidget
 
 if TYPE_CHECKING:
     import napari
 
-# Uses the `autogenerate: true` flag in the plugin manifest
-# to indicate it should be wrapped as a magicgui to autogenerate
-# a widget.
-
-def get_phasor_components(flim_data, harmonic=1):
+def connect_events(widget):
     '''
-    Calculate phasor components G and S from the fourier transform
+    Connect widget events to make some visible/invisible depending on others
     '''
-    import numpy as np
-    flim_data_fft = np.fft.fft(flim_data, axis=0)
-    dc = flim_data_fft[0].real
-    # change the zeros to the img average
-    # dc = np.where(dc != 0, dc, int(np.mean(dc)))
-    dc = np.where(dc != 0, dc, 1)
-    g = flim_data_fft[harmonic].real
-    g = g / dc
-    s = abs(flim_data_fft[harmonic].imag)
-    s /= dc
-    return g, s, dc
+    def toggle_median_n_widget(event):
+        widget.median_n.visible = event
+    # Connect events
+    widget.apply_median.changed.connect(toggle_median_n_widget)
+    # Intial visibility states
+    widget.median_n.visible = False
+    widget.laser_frequency.label = 'Laser Frequency (MHz)'
 
-def create_time_array(frequency, n_points=100):
-    '''
-    Create time array from laser frequency
+@magic_factory(widget_init=connect_events)
+def make_flim_phasor_plot(image_layer : Image,
+                          laser_frequency : float = 40,
+                          harmonic : int = 1,
+                          threshold : int = 0,
+                          apply_median : bool = False,
+                          median_n : int = 1,
+                          napari_viewer : Viewer = None) -> None:
+    from skimage.segmentation import relabel_sequential
+    image = image_layer.data
+    if 'TTResult_SyncRate' in image_layer.metadata:
+        laser_frequency = image_layer.metadata['TTResult_SyncRate'] *1E-6 #MHz
     
-    Parameters
-    ----------
-    frequency: float
-        Frquency of the pulsed laser (in MHz)
-    n_points: int, optional
-        The number of samples collected between each aser shooting
-    Returns
-    -------
-    time_array : array
-        Time array (in nanoseconds)
-    '''
-    import numpy as np
-    time_window = 1 / (frequency * 10**6)
-    time_window_ns = time_window * 10**9 # in nanoseconds
-    time_step = time_window_ns / n_points # ns
-    array = np.arange(0, n_points)
-    time_array = array * time_step
-    return time_array
-
-
-def make_flim_label_layer(image : ImageData, laser_frequency : float, harmonic : int = 1, threshold : int = 0, apply_median : bool = False, viewer=None) -> LayerDataTuple:
+    time_mask = make_time_mask(image, laser_frequency)
     
-    # create time array based on laser frequency
-    time_array = create_time_array(laser_frequency, n_points = image.shape[0])
-    time_step = time_array[1]
-    # choose starting index based on maximum value of image histogram
-    heights, bin_edges = np.histogram(np.ravel(np.argmax(image, axis=0) * time_step), bins=time_array)
-    start_index = np.argmax(heights[1:]) + 1
+    space_mask = make_space_mask_from_manual_threshold(image, threshold)
     
-    time_mask = time_array >= time_array[start_index]
+    image = image[time_mask]
     
-    g, s, dc = get_phasor_components(image[time_mask], harmonic = harmonic)
+    if apply_median:
+        image = apply_median_filter(image, median_n)
+    
+    g, s, dc = get_phasor_components(image, harmonic = harmonic)
 
     label_image = np.arange(dc.shape[0]*dc.shape[1]).reshape(dc.shape) + 1
+    label_image[~space_mask] = 0
+    label_image = relabel_sequential(label_image)[0]
 
-    phasor_components = {'label': np.ravel(label_image), 'G': np.ravel(g), 'S': np.ravel(s)}
+    phasor_components = {'label': np.ravel(label_image[space_mask]), 
+                         'G': np.ravel(g[space_mask]),
+                         'S': np.ravel(s[space_mask])}
     table = pd.DataFrame(phasor_components)
     
+    # The layer has to be created here so the plotter can be filled properly
+    # below. Overwrite layer if it already exists.
+    for layer in napari_viewer.layers:
+        if (isinstance(layer, Labels)) & (layer.name=='Label_' + image_layer.name): 
+            labels_layer = layer
+            labels_layer.data = label_image
+            labels_layer.features = table
+            break
+    else:
+        labels_layer = napari_viewer.add_labels(label_image,
+                                    name = 'Label_' + image_layer.name,
+                                    features = table)
     
-    return (label_image, {'features' : table}, 'labels')
+    # Check if plotter was alrerady added to dock_widgets
+    dock_widgets_names = [key for key, value in napari_viewer.window._dock_widgets.items()]
+    if 'Plotter Widget' not in dock_widgets_names:
+        plotter_widget = PhasorPlotterWidget(napari_viewer)
+        napari_viewer.window.add_dock_widget(plotter_widget, name = 'Plotter Widget')
+    else:
+        widgets = napari_viewer.window._dock_widgets['Plotter Widget']
+        plotter_widget = widgets.findChild(PhasorPlotterWidget)
+        # If we were to use the original plotter, we could add it as below
+        # _, plotter_widget = napari_viewer.window.add_plugin_dock_widget(
+        #     'napari-clusters-plotter',
+        #     widget_name='Plotter Widget')
+    # Set G and S as features to plot (update_axes_list method clears Comboboxes)
+    plotter_widget.update_axes_list() 
+    plotter_widget.plot_x_axis.setCurrentIndex(1)
+    plotter_widget.plot_y_axis.setCurrentIndex(2)
+    # Show parent (PlotterWidget) so that run function can run properly
+    plotter_widget.parent().show()
+    # Disconnect selector to reset collection of points in plotter
+    # (it gets reconnected when 'run' method is run)
+    plotter_widget.graphics_widget.selector.disconnect()
+    plotter_widget.run(labels_layer.features,
+                       plotter_widget.plot_x_axis.currentText(),
+                       plotter_widget.plot_y_axis.currentText())
+    
+    # Update laser frequency spinbox
+    # To Do: access and update widget in a better way
+    if 'Make FLIM Phasor Plot (napari-flim-phasor-calculator)' in dock_widgets_names:
+        widgets = napari_viewer.window._dock_widgets['Make FLIM Phasor Plot (napari-flim-phasor-calculator)']
+        laser_frequency_spinbox = widgets.children()[4].children()[2].children()[-1]
+        laser_frequency_spinbox.setValue(laser_frequency)
 
-def example_function_widget(img_layer: "napari.layers.Image"):
-    print(f"you have selected {img_layer}")
+    return 
+
+
