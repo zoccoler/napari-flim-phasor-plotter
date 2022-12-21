@@ -7,32 +7,31 @@
 [![codecov](https://codecov.io/gh/zoccoler/napari-flim-phasor-calculator/branch/main/graph/badge.svg)](https://codecov.io/gh/zoccoler/napari-flim-phasor-calculator)
 [![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-flim-phasor-calculator)](https://napari-hub.org/plugins/napari-flim-phasor-calculator)
 
-A simple plugin to use FooBar segmentation within napari
+A napari plugin to generate a phasor plot for TCSPC FLIM data. 
 
 ----------------------------------
 
-This [napari] plugin was generated with [Cookiecutter] using [@napari]'s [cookiecutter-napari-plugin] template.
+## Usage
 
-<!--
-Don't miss the full getting started guide to set up your new package:
-https://github.com/napari/cookiecutter-napari-plugin#getting-started
+Open a raw TCSPC FLIM image in napari and call the plugin from the Plugins menu. Specify the laser frequency, which harmonic and a threshold for the phasor plot. Optionally, apply median filters. Below is a demonstration:
 
-and review the napari docs for plugin developers:
-https://napari.org/stable/plugins/index.html
--->
+<img src="https://github.com/zoccoler/napari-flim-phasor-calculator/raw/main/figures/napari_FLIM_phasor_calculator_Demo.gif" width="700"/>
+
+Manually draw curves on the plot to get the corresponding pixels highlighted in a new labels layer. Hold 'SHIFT' while drawing to add more than two colors.
+
+This plugin integrates with [napari-clusters-plotter plugin](https://github.com/BiAPoL/napari-clusters-plotter).
+
+This plugin can read the following FLIM file types:
+  - ".ptu"
+
+This plugin works with the following data shapes:
+  - 2D timelapse, where time is the first dimension.
 
 ## Installation
 
-You can install `napari-flim-phasor-calculator` via [pip]:
-
-    pip install napari-flim-phasor-calculator
-
-
-
-To install latest development version :
+You can install `napari-flim-phasor-calculator` via [pip]. Currently, only the development version is available:
 
     pip install git+https://github.com/zoccoler/napari-flim-phasor-calculator.git
-
 
 ## Contributing
 
