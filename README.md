@@ -29,7 +29,21 @@ This plugin works with the following data shapes:
 
 ## Installation
 
-You can install `napari-flim-phasor-calculator` via [pip]. Currently, only the development version is available:
+You can install `napari-flim-phasor-calculator` via [pip]. Currently, only the development version is available.
+
+Create a conda environment:
+
+    conda create -n napari-flim-phasor python=3.9
+    
+Activate the environment:
+
+    conda activate napari-flim-phasor
+    
+Then install napari (and git if on Windows):
+
+    conda install -c conda-forge napari git
+    
+And finally install the plugin development version with:
 
     pip install git+https://github.com/zoccoler/napari-flim-phasor-calculator.git
 
