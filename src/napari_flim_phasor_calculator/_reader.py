@@ -7,6 +7,7 @@ https://napari.org/stable/plugins/guides.html?#readers
 """
 import numpy as np
 from napari_flim_phasor_calculator._io.readPTU_FLIM import PTUreader
+import sdtfile
 
 def napari_get_reader(path):
     """A basic implementation of a Reader contribution.
@@ -28,11 +29,14 @@ def napari_get_reader(path):
         # so we are only going to look at the first file.
         path = path[0]
 
-    # otherwise we return the *function* that can read ``path``.
-    return reader_function
+        # If we recognize the format, we return the actual reader function
+    if isinstance(path, str) and (path.lower().endswith('.ptu') or (path.lower().endswith('.sdt'))):
+        return flim_file_reader
+    # otherwise we return None.
+    return None
 
 
-def reader_function(path):
+def flim_file_reader(path):
     """Take a path or list of paths and return a list of LayerData tuples.
 
     Readers are expected to return data as a list of tuples, where each tuple
@@ -58,13 +62,27 @@ def reader_function(path):
     paths = [path] if isinstance(path, str) else path
     layer_data = []
     for path in paths:
-        ptu_file = PTUreader(path, print_header_data = False)
-        data, _ = ptu_file.get_flim_data_stack()
-        # Move xy dimensions to the end
-        # TO DO: handle 3D images
-        data = np.moveaxis(data, [0, 1], [-2, -1])
-        # optional kwargs for the corresponding viewer.add_* method
-        add_kwargs = {'channel_axis': 0, 'metadata': ptu_file.head}
+        # get data from ptu files
+        if path.lower().endswith('.ptu'):
+            ptu_file = PTUreader(path, print_header_data = False)
+            data, _ = ptu_file.get_flim_data_stack()
+            # Move xy dimensions to the end
+            # TO DO: handle 3D images
+            data = np.moveaxis(data, [0, 1], [-2, -1])
+            # optional kwargs for the corresponding viewer.add_* method
+            metadata = ptu_file.head
+            metadata['file_type'] = 'ptu'
+
+        # get data from sdt files
+        else:
+            sdt_file = sdtfile.SdtFile(path)  # header to be implemented
+            data_raw = np.asarray(sdt_file.data)  # option to choose channel to include
+            data = np.moveaxis(np.stack(data_raw), 3, 1)
+            metadata = {name: sdt_file.measure_info[0][name].item() for name in sdt_file.measure_info[0].dtype.names}  # convert recarray to dict
+            metadata['times'] = sdt_file.times
+            metadata['file_type'] = 'sdt'
+
+        add_kwargs = {'channel_axis': 0, 'metadata': metadata}
         layer_type = "image"
         layer_data.append((data, add_kwargs, layer_type))
     return layer_data

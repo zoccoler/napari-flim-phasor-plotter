@@ -48,8 +48,10 @@ def make_flim_phasor_plot(image_layer : Image,
                           napari_viewer : Viewer = None) -> None:
     from skimage.segmentation import relabel_sequential
     image = image_layer.data
-    if 'TTResult_SyncRate' in image_layer.metadata:
-        laser_frequency = image_layer.metadata['TTResult_SyncRate'] *1E-6 #MHz
+    if image_layer.metadata['file_type'] is 'ptu' and 'TTResult_SyncRate' in image_layer.metadata:
+        laser_frequency = image_layer.metadata['TTResult_SyncRate'] * 1E-6 #MHz
+    elif image_layer.metadata['file_type'] is 'sdt' and 'times' in image_layer.metadata:
+        laser_frequency = 1 / (image_layer.metadata['times'][0][1] * len(image_layer.metadata['times'][0]) * 10**6) # calculate the laser frequency in MHz based on first timepoint of measurement after start and number of time bins
     
     time_mask = make_time_mask(image, laser_frequency)
     
