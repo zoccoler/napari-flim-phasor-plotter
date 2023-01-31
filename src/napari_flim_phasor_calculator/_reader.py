@@ -35,6 +35,15 @@ def napari_get_reader(path):
     # otherwise we return None.
     return None
 
+def recarray_to_dict(recarray):
+    # convert recarray to dict
+    dictionary = {}
+    for name in recarray.dtype.names:
+        if type(recarray[name]) == np.recarray:
+            dictionary[name] = recarray_to_dict(recarray[name])
+        else:
+            dictionary[name] = recarray[name].item()
+    return dictionary
 
 def flim_file_reader(path):
     """Take a path or list of paths and return a list of LayerData tuples.
@@ -78,9 +87,14 @@ def flim_file_reader(path):
             sdt_file = sdtfile.SdtFile(path)  # header to be implemented
             data_raw = np.asarray(sdt_file.data)  # option to choose channel to include
             data = np.moveaxis(np.stack(data_raw), 3, 1)
-            metadata = {name: sdt_file.measure_info[0][name].item() for name in sdt_file.measure_info[0].dtype.names}  # convert recarray to dict
-            metadata['times'] = sdt_file.times
-            metadata['file_type'] = 'sdt'
+
+            # create list of measure_info for each channel
+            measure_info_list = []
+            for measure_info_recarray in sdt_file.measure_info:
+                measure_info_list.append(recarray_to_dict(measure_info_recarray))
+
+            metadata = {'measure_info': measure_info_list,
+                        'file_type': 'sdt'}
 
         add_kwargs = {'channel_axis': 0, 'metadata': metadata}
         layer_type = "image"

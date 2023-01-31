@@ -51,8 +51,10 @@ def make_flim_phasor_plot(image_layer : Image,
     if 'file_type' in image_layer.metadata:
         if (image_layer.metadata['file_type'] == 'ptu') and ('TTResult_SyncRate' in image_layer.metadata):
             laser_frequency = image_layer.metadata['TTResult_SyncRate'] * 1E-6 #MHz
-        elif (image_layer.metadata['file_type'] == 'sdt') and ('times' in image_layer.metadata):
-            laser_frequency = 1 / (image_layer.metadata['times'][0][1] * len(image_layer.metadata['times'][0]) * 10**6) # calculate the laser frequency in MHz based on first timepoint of measurement after start and number of time bins
+        elif image_layer.metadata['file_type'] == 'sdt':
+            # laser frequency only calculated for channel 1
+            # TODO: add laser frequency from channel for which phasor is calculated
+            laser_frequency = image_layer.metadata['measure_info'][0]['StopInfo']['max_sync_rate'] * 10 ** -6  # in MHz
     
     time_mask = make_time_mask(image, laser_frequency)
     
