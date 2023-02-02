@@ -35,6 +35,15 @@ def napari_get_reader(path):
     # otherwise we return None.
     return None
 
+def recarray_to_dict(recarray):
+    # convert recarray to dict
+    dictionary = {}
+    for name in recarray.dtype.names:
+        if type(recarray[name]) == np.recarray:
+            dictionary[name] = recarray_to_dict(recarray[name])
+        else:
+            dictionary[name] = recarray[name].item()
+    return dictionary
 
 def flim_file_reader(path):
     """Take a path or list of paths and return a list of LayerData tuples.
@@ -70,6 +79,8 @@ def flim_file_reader(path):
             # TO DO: handle 3D images
             data = np.moveaxis(data, [0, 1], [-2, -1])
             # optional kwargs for the corresponding viewer.add_* method
+            # TO DO: get laser frequency for multiple channels, similar to 
+            # how it was done for sdt below
             metadata = ptu_file.head
             metadata['file_type'] = 'ptu'
 
@@ -78,11 +89,15 @@ def flim_file_reader(path):
             sdt_file = sdtfile.SdtFile(path)  # header to be implemented
             data_raw = np.asarray(sdt_file.data)  # option to choose channel to include
             data = np.moveaxis(np.stack(data_raw), 3, 1)
-            metadata = {name: sdt_file.measure_info[0][name].item() for name in sdt_file.measure_info[0].dtype.names}  # convert recarray to dict
-            metadata['times'] = sdt_file.times
-            metadata['file_type'] = 'sdt'
 
-        add_kwargs = {'channel_axis': 0, 'metadata': metadata}
+            # create list of metadata for each channel
+            metadata_list = []
+            for measure_info_recarray in sdt_file.measure_info:
+                metadata = {'measure_info': recarray_to_dict(measure_info_recarray),
+                            'file_type': 'sdt'}
+                metadata_list.append(metadata)
+
+        add_kwargs = {'channel_axis': 0, 'metadata': metadata_list}
         layer_type = "image"
         layer_data.append((data, add_kwargs, layer_type))
     return layer_data
