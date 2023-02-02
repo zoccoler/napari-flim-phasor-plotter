@@ -38,7 +38,10 @@ def connect_events(widget):
     widget.median_n.visible = False
     widget.laser_frequency.label = 'Laser Frequency (MHz)'
 
-@magic_factory(widget_init=connect_events)
+@magic_factory(widget_init=connect_events,
+               laser_frequency={'step': 0.001,
+               'tooltip': ('If loaded image has metadata, laser frequency will get automatically updated after run. '
+               'Otherwise, manually insert laser frequency here.')})
 def make_flim_phasor_plot(image_layer : Image,
                           laser_frequency : float = 40,
                           harmonic : int = 1,
@@ -54,7 +57,7 @@ def make_flim_phasor_plot(image_layer : Image,
         elif image_layer.metadata['file_type'] == 'sdt':
             # laser frequency only calculated for channel 1
             # TODO: add laser frequency from channel for which phasor is calculated
-            laser_frequency = image_layer.metadata['measure_info'][0]['StopInfo']['max_sync_rate'] * 10 ** -6  # in MHz
+            laser_frequency = image_layer.metadata['measure_info']['StopInfo']['max_sync_rate'] * 10 ** -6  # in MHz
     
     time_mask = make_time_mask(image, laser_frequency)
     
@@ -119,6 +122,8 @@ def make_flim_phasor_plot(image_layer : Image,
     if 'Make FLIM Phasor Plot (napari-flim-phasor-calculator)' in dock_widgets_names:
         widgets = napari_viewer.window._dock_widgets['Make FLIM Phasor Plot (napari-flim-phasor-calculator)']
         laser_frequency_spinbox = widgets.children()[4].children()[2].children()[-1]
+        # Set precision of spinbox based on number of decimals in laser_frequency
+        laser_frequency_spinbox.setDecimals(str(laser_frequency)[::-1].find('.'))
         laser_frequency_spinbox.setValue(laser_frequency)
 
     return 

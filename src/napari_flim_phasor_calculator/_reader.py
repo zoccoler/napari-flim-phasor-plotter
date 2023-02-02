@@ -79,6 +79,8 @@ def flim_file_reader(path):
             # TO DO: handle 3D images
             data = np.moveaxis(data, [0, 1], [-2, -1])
             # optional kwargs for the corresponding viewer.add_* method
+            # TO DO: get laser frequency for multiple channels, similar to 
+            # how it was done for sdt below
             metadata = ptu_file.head
             metadata['file_type'] = 'ptu'
 
@@ -88,15 +90,14 @@ def flim_file_reader(path):
             data_raw = np.asarray(sdt_file.data)  # option to choose channel to include
             data = np.moveaxis(np.stack(data_raw), 3, 1)
 
-            # create list of measure_info for each channel
-            measure_info_list = []
+            # create list of metadata for each channel
+            metadata_list = []
             for measure_info_recarray in sdt_file.measure_info:
-                measure_info_list.append(recarray_to_dict(measure_info_recarray))
+                metadata = {'measure_info': recarray_to_dict(measure_info_recarray),
+                            'file_type': 'sdt'}
+                metadata_list.append(metadata)
 
-            metadata = {'measure_info': measure_info_list,
-                        'file_type': 'sdt'}
-
-        add_kwargs = {'channel_axis': 0, 'metadata': metadata}
+        add_kwargs = {'channel_axis': 0, 'metadata': metadata_list}
         layer_type = "image"
         layer_data.append((data, add_kwargs, layer_type))
     return layer_data
