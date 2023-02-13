@@ -548,6 +548,8 @@ class PTUreader():
         self.tcspc   = tcspc.astype(np.uint16, copy=False)
         self.channel = chan.astype(np.uint8,  copy=False)
         self.special = special.astype(np.uint8, copy=False)
+        self.x_size = self.head['ImgHdr_PixX']
+        self.y_size = self.head['ImgHdr_PixY']
         print("Raw Data has been Read!\n")
 
         return None
@@ -573,7 +575,7 @@ class PTUreader():
         channel     = self.channel 
         special     = self.special 
         
-        del self.sync, self.tcspc, self.channel , self.special
+        del self.sync, self.special# self.tcspc self.channel
         
         flim_data_stack = get_flim_data_stack_static(sync, tcspc, channel, special, header_variables)
         

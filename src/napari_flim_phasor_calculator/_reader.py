@@ -95,30 +95,48 @@ def flim_file_reader(path):
             pattern_z = '_z(\d+)' # numbers following '_z'
             file_paths = sorted(file_paths, key=lambda x: (int(re.findall(pattern_t, x.stem)[0]) if re.findall(pattern_t, x.stem) else 0,
                                                     int(re.findall(pattern_z, x.stem)[0]) if re.findall(pattern_z, x.stem) else 0))
+
+            
             # To do: handle Nones
-            tz_max = max([get_current_tz(file_path) for file_path in file_paths])
+            tz_max = max([get_current_tz(file_path) for file_path in file_paths if file_path.suffix == '.ptu'])
+            ptu_file = PTUreader(file_paths[1], print_header_data = False)
+            image_shape = max([(np.unique(PTUreader(file_path, print_header_data = False).channel).size,
+                                np.unique(PTUreader(file_path, print_header_data = False).tcspc).size,
+                                PTUreader(file_path, print_header_data = False).y_size,
+                                PTUreader(file_path, print_header_data = False).x_size)
+                                for file_path in file_paths if file_path.suffix == '.ptu'])
+
+           
             z_list, t_list = [], []
             previous_t = 1
             for file_path in file_paths:
-                current_z, current_t = get_current_tz(file_path)
-                # If time changed, append to t_list and clear z_list
-                if current_t is not None:
-                    if current_t > previous_t:
-                        t_list.append(da.stack(z_list, axis=0))
-                        z_list = []
-                        previous_t = current_t
                 if file_path.suffix == '.ptu':
-                    data, summed_intensity_image, metadata_list = read_ptu_file(path)
-                    if current_z is not None:
-                        z_list.append(data)
+                    current_z, current_t = get_current_tz(file_path)
+                    #If time changed, append to t_list and clear z_list
+                    if current_t is not None:
+                        if current_t > previous_t:
+                            t_list.append(da.stack(z_list, axis=0))
+                            z_list = []
+                            previous_t = current_t
+                    
+                        data, summed_intensity_image, metadata_list = read_ptu_file(file_path)
+                        if current_z is not None:
+                            print(file_path.stem)
+                            print(data.shape)
+                            # TO DO: Create an empty image here and insert each z_stack into it
+                            image = np.zeros(image_shape, dtype=np.uint16)
+                            # Try some broadcast function instead
+                            image[:data.shape[0], :data.shape[1], :data.shape[2], :data.shape[3]] = data
+                            z_list.append(image)
             data = da.stack(t_list)   
         else:
+            file_path = path
              # get data from ptu files
             if file_path.suffix == '.ptu':
-                data, summed_intensity_image, metadata_list = read_ptu_file(path)
+                data, summed_intensity_image, metadata_list = read_ptu_file(file_path)
             # get data from sdt files
-            elif path.suffix == '.sdt':
-                sdt_file = sdtfile.SdtFile(path)  # header to be implemented
+            elif file_path.suffix == '.sdt':
+                sdt_file = sdtfile.SdtFile(file_path)  # header to be implemented
                 data_raw = np.asarray(sdt_file.data)  # option to choose channel to include
                 data = np.moveaxis(np.stack(data_raw), -1, 1)
                 summed_intensity_image = np.sum(data, axis=1) # sum over photon_time axis
@@ -140,6 +158,7 @@ def read_ptu_file(path):
     # create list of metadata for each channel
     metadata_list = []
     ptu_file = PTUreader(path, print_header_data = False)
+    
     data, _ = ptu_file.get_flim_data_stack()
     # Move xy dimensions to the end
     # TO DO: handle 3D images
