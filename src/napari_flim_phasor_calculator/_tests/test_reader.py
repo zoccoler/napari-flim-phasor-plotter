@@ -9,22 +9,28 @@ from pathlib import Path
 viewer = napari.Viewer()
 ptu_image_path = r"C:\Users\mazo260d\Desktop\Conni_BiA_PoL\copied_for_Marcelo\single_image\raw_FLIM_data\single_FLIM_image.ptu"
 sdt_image_path = r"C:\Users\mazo260d\Desktop\Conni_BiA_PoL\Sample_files\sperm_seminal_receptacle_NADH_FLIM_2ch.sdt"
-# ptu_folder_path = r"C:\Users\mazo260d\Desktop\Conni_BiA_PoL\embryo_FLIM_data\raw_data_embryo_stack_3tps_43pl_2ch\sub_stack"
 ptu_folder_path_timelapse = r"C:\Users\mazo260d\Desktop\Conni_BiA_PoL\embryo_FLIM_data\raw_data_embryo_stack_3tps_43pl_2ch\embryo_43pl_2ch_3tps"
 ptu_folder_path_zstack = r"C:\Users\mazo260d\Desktop\Conni_BiA_PoL\stack"
-ptu_folder_path = ptu_image_path
+
+ptu_image_path = r"Z:\Data\Conni_BiA_PoL\copied_for_Marcelo\single_image\raw_FLIM_data\single_FLIM_image.ptu"
+sdt_image_path = r"Z:\Data\Conni_BiA_PoL\Sample_files\sperm_seminal_receptacle_NADH_FLIM_2ch.sdt"
+ptu_folder_path_timelapse = r"Z:\Data\Conni_BiA_PoL\embryo_FLIM_data\raw_data_embryo_stack_3tps_43pl_2ch\embryo_43pl_2ch_3tps"
+ptu_folder_path_zstack = r"Z:\Data\Conni_BiA_PoL\stack"
+
 # ptu_list = list(ptu_folder_path.glob('**/*.ptu'))
 # viewer.open(ptu_list, stack=True)
 
 # Open single sdt image
-viewer.open(sdt_image_path, plugin='napari-flim-phasor-calculator')
-# Open single ptu image
-viewer.open(ptu_image_path, plugin='napari-flim-phasor-calculator')
+# viewer.open(sdt_image_path, plugin='napari-flim-phasor-calculator')
+# # Open single ptu image
+# viewer.open(ptu_image_path, plugin='napari-flim-phasor-calculator')
 # Open z-stack
 viewer.open(ptu_folder_path_zstack, plugin='napari-flim-phasor-calculator')
 # open time-lapse z-stack
-viewer.open(ptu_folder_path_timelapse, plugin='napari-flim-phasor-calculator')
+# viewer.open(ptu_folder_path_timelapse, plugin='napari-flim-phasor-calculator')
 napari.run()
+
+
 # # tmp_path is a pytest fixture
 # def test_reader(tmp_path):
 #     """An example of how you might test your plugin."""

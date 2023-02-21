@@ -132,7 +132,7 @@ def flim_file_reader(path):
                             z_list = []
                             z_summed_intensity_list = []
                             previous_t = current_t
-                    
+                    # TO DO: delayed reading with dask
                     data, summed_intensity_image, metadata_list = read_ptu_file(file_path)
                     if current_z is not None:
                         print(file_path.stem)
