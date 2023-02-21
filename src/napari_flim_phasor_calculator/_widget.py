@@ -68,7 +68,7 @@ def make_flim_phasor_plot(image_layer : Image,
     
     g, s, dc = get_phasor_components(image, harmonic = harmonic)
 
-    label_image = np.arange(dc.shape[0]*dc.shape[1]).reshape(dc.shape) + 1
+    label_image = np.arange(np.prod(dc.shape)).reshape(dc.shape) + 1
     label_image[~space_mask] = 0
     label_image = relabel_sequential(label_image)[0]
 
