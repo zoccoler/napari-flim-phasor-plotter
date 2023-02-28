@@ -130,11 +130,9 @@ def read_ptu_stack(path):
     # file_paths = sorted(file_paths0, key=lambda x: (int(re.findall(pattern_t, x.stem)[0]) if re.findall(pattern_t, x.stem) else 0,
     #                                         int(re.findall(pattern_z, x.stem)[0]) if re.findall(pattern_z, x.stem) else 0))
 
-    # To do: handle Nones
     tz_max = max([get_current_tz(file_path) for file_path in file_paths if file_path.suffix == '.ptu'])
     
-    # ptu_file = PTUreader(file_paths[1], print_header_data = False)
-    
+    # TO DO: offer fast reading option by calculating max shape from metadata (array may become bigger)
     # Go through files to get max shape (number of photon bins may vary from image to image)
     shapes_list = []
     for file_path in file_paths:
@@ -169,6 +167,9 @@ def read_ptu_stack(path):
             # TO DO: delayed reading with dask
             # TO DO: reading function should return single image, not tuple
             data = da.from_delayed(read_ptu_data_delayed(file_path), shape=image_shape, dtype=image_dtype)
+            summed_intensity_image = da.from_delayed(read_ptu_summed_intensity_image_delayed(file_path), 
+                                                     shape=tuple([x for i,x in enumerate(image_shape) if i!=1]),
+                                                     dtype=image_dtype)
             # summed_intensity_image
             # metadata_list
             if current_z is not None:
@@ -179,15 +180,15 @@ def read_ptu_stack(path):
                 # # Try some broadcast function instead
                 # image[:data.shape[0], :data.shape[1], :data.shape[2], :data.shape[3]] = data
                 z_list.append(data)
-                # z_summed_intensity_list.append(summed_intensity_image)
+                z_summed_intensity_list.append(summed_intensity_image)
     # Append last time point
     t_list.append(da.stack(z_list, axis=0))
-    # t_summed_intensity_list.append(da.stack(z_summed_intensity_list, axis=0))
+    t_summed_intensity_list.append(da.stack(z_summed_intensity_list, axis=0))
     data = da.stack(t_list)
-    # summed_intensity_image = da.stack(t_summed_intensity_list)
+    summed_intensity_image = da.stack(t_summed_intensity_list)
     data =  da.moveaxis(data, [-4, -3], [0, 1])
-    # summed_intensity_image = da.moveaxis(summed_intensity_image, -3, 0)
-    summed_intensity_image = np.zeros((10,10))
+    summed_intensity_image = da.moveaxis(summed_intensity_image, -3, 0)
+    # summed_intensity_image = np.zeros((10,10))
     metadata_list = []
     return data, summed_intensity_image, metadata_list
 
@@ -200,6 +201,15 @@ def read_ptu_data(path):
     data, _ = ptu_file.get_flim_data_stack()
     data = np.moveaxis(data, [0, 1], [-2, -1])
     return data
+
+@dask.delayed
+def read_ptu_summed_intensity_image_delayed(path):
+    return read_ptu_summed_intensity_image(path)
+
+def read_ptu_summed_intensity_image(path):
+    data = read_ptu_data(path)
+    summed_intensity_image = np.sum(data, axis=1) # sum over photon_time axis
+    return summed_intensity_image
 
 def read_ptu_metadata(path):
     ptu_file = PTUreader(path, print_header_data = False)
