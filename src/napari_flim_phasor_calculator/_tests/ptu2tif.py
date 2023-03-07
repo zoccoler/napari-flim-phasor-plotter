@@ -3,7 +3,7 @@ import numpy as np
 from skimage import io
 from napari_flim_phasor_calculator._reader import read_ptu_data_2D
 
-folder_path = r"C:\Users\mazo260d\Desktop\Conni_BiA_PoL\stack"
+folder_path = r"C:\Users\mazo260d\Desktop\Conni_BiA_PoL\embryo_FLIM_data\raw_data_embryo_stack_3tps_43pl_2ch\embryo_43pl_2ch_3tps"
 # Use Path from pathlib
 folder_path = Path(folder_path)
 output_path = folder_path.parent / 'output_as_tif'

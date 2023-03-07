@@ -10,7 +10,8 @@ viewer = napari.Viewer()
 ptu_image_path = r"C:\Users\mazo260d\Desktop\Conni_BiA_PoL\copied_for_Marcelo\single_image\raw_FLIM_data\single_FLIM_image.ptu"
 sdt_image_path = r"C:\Users\mazo260d\Desktop\Conni_BiA_PoL\Sample_files\sperm_seminal_receptacle_NADH_FLIM_2ch.sdt"
 ptu_folder_path_timelapse = r"C:\Users\mazo260d\Desktop\Conni_BiA_PoL\embryo_FLIM_data\raw_data_embryo_stack_3tps_43pl_2ch\embryo_43pl_2ch_3tps"
-ptu_folder_path_zstack = r"C:\Users\mazo260d\Desktop\Conni_BiA_PoL\stack"
+ptu_folder_path_zstack = r"C:\Users\mazo260d\Desktop\Conni_BiA_PoL\stack" # neverending reading...
+ptu_folder_path_zstack_smaller = r"C:\Users\mazo260d\Desktop\Conni_BiA_PoL\stack_smaller"
 
 # ptu_image_path = r"Z:\Data\Conni_BiA_PoL\copied_for_Marcelo\single_image\raw_FLIM_data\single_FLIM_image.ptu"
 # sdt_image_path = r"Z:\Data\Conni_BiA_PoL\Sample_files\sperm_seminal_receptacle_NADH_FLIM_2ch.sdt"
@@ -27,7 +28,7 @@ ptu_folder_path_zstack = r"C:\Users\mazo260d\Desktop\Conni_BiA_PoL\stack"
 # Open z-stack
 # viewer.open(ptu_folder_path_zstack, plugin='napari-flim-phasor-calculator')
 # open time-lapse z-stack
-viewer.open(ptu_folder_path_zstack, plugin='napari-flim-phasor-calculator')
+viewer.open(ptu_folder_path_zstack_smaller, plugin='napari-flim-phasor-calculator')
 napari.run()
 
 
