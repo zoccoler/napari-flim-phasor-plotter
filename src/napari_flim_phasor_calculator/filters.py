@@ -17,11 +17,11 @@ def make_time_mask(image, laser_frequency):
     '''
     from napari_flim_phasor_calculator._synthetic import create_time_array
     # create time array based on laser frequency
-    time_array = create_time_array(laser_frequency, n_points = image.shape[0])
+    time_array = create_time_array(laser_frequency, n_points = image.shape[0]) # ut axis
     time_step = time_array[1]
     # choose starting index based on maximum value of image histogram
     heights, bin_edges = np.histogram(
-        np.ravel(np.argmax(image, axis=0) * time_step), bins=time_array
+        np.ravel(np.argmax(image, axis=0) * time_step), bins=time_array # index where ut max
         )
     
     start_index = np.argmax(heights[1:]) + 1

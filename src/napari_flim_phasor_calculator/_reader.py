@@ -86,11 +86,8 @@ def flim_file_reader(path):
     for path in paths:
         # Assume stack if paths are folders 
         if not path.is_file():
-            # get data from ptu files and metadata
-            if len([p for p in path.glob('*.ptu')]) > 0: 
-                data, summed_intensity_image, metadata_list = read_ptu_stack(path)
-            else:
-                notifications.show_warning('No .ptu file in folder.')
+            folder_path = path
+            data, summed_intensity_image, metadata_list = read_stack(folder_path)
         # If paths are files, read individual separated files
         else:
             file_path = path
@@ -110,13 +107,198 @@ def flim_file_reader(path):
                                 'file_type': 'sdt'}
                     metadata_list.append(metadata)
         # arguments for TCSPC stack
-        add_kwargs = {'channel_axis': 1, 'metadata': metadata_list}
+        add_kwargs = {'channel_axis': 0, 'metadata': metadata_list}
         layer_type = "image"
         layer_data.append((data, add_kwargs, layer_type))
         # arguments for intensity image
-        add_kwargs = {'channel_axis': 1, 'metadata': metadata_list, 'name': 'summed_intensity_image_' + Path(path).stem}
+        add_kwargs = {'channel_axis': 0, 'metadata': metadata_list, 'name': 'summed_intensity_image_' + Path(path).stem}
         layer_data.append((summed_intensity_image, add_kwargs, layer_type))
     return layer_data
+
+def read_stack(folder_path):
+    import zarr
+    # Get list of file paths
+    file_paths = natsorted([file_path for file_path in folder_path.iterdir()])
+    suffixes = [p.suffix for p in folder_path.iterdir()]
+    if '.tif' in suffixes:
+        file_extension = '.tif'
+    elif '.ptu' in suffixes:
+        file_extension = '.ptu'
+    elif '.sdt' in suffixes:
+        file_extension = '.sdt'
+    elif '.zarray' in suffixes:
+        file_extension = '.zarr'
+    else:
+        notifications.show_warning('The plugin cannot ready any of these file formats: ', suffixes)
+        print('The plugin cannot ready any of these file formats: ', suffixes)
+        return
+    
+    if file_extension != '.zarr':
+        # Estimate stack sizes
+        stack_size_in_MB = get_stack_estimated_sizes(file_paths, file_extension)
+        if stack_size_in_MB < 2e3: #2GB
+            # read full stack
+            data = make_full_numpy_stack(file_paths, file_extension)
+            # TO DO: Get metadata
+            metadata_list = []
+        else:
+            notifications.show_warning('Stack is larger than 2GB, please convert to .zarr')
+            print('Stack is larger than 2GB, please convert to .zarr')
+            return
+    else:
+        # TO DO: read zarr and metadata
+        # Read zarr
+        data = zarr.open(folder_path, mode='r+')
+        metadata_list = []
+    # To DO: calculate summed intensity image
+    # make summed intensity from second dimension (axis=2) (microtime)
+    summed_intensity_image = np.sum(data, axis=1, keepdims=True)
+    # summed_intensity_image=np.array([0])
+    
+    return data, summed_intensity_image, metadata_list
+
+
+# Read single ptu file
+def read_single_ptu_file(path):
+    ptu_file = PTUreader(path, print_header_data = False)
+    data, _ = ptu_file.get_flim_data_stack()
+    # from (x, y, ch, ut) to (ch, ut, y, x)
+    data = np.moveaxis(data, [0, 1], [-2, -1])
+    # metadata per channel/detector
+    metadata_per_channel = []
+    metadata = ptu_file.head
+    metadata['file_type'] = 'ptu'
+    # Add same metadata to each channel
+    for channel in range(data.shape[0]):
+        metadata_per_channel.append(metadata)
+    return data, metadata_per_channel
+
+# Read single sdt file
+def read_single_sdt_file(path):
+    sdt_file = sdtfile.SdtFile(path)  # header to be implemented
+    data_raw = np.asarray(sdt_file.data)  # option to choose channel to include
+    # from (ch, y, x, ut) to (ch, ut, y, x)
+    data = np.moveaxis(np.stack(data_raw), -1, 1)
+
+    metadata_per_channel = []
+    for measure_info_recarray in sdt_file.measure_info:
+        metadata = {'measure_info': recarray_to_dict(measure_info_recarray),
+                    'file_type': 'sdt'}
+        metadata_per_channel.append(metadata)
+
+# Read single tif file
+def read_single_tif_file(path, channel_axis=0, ut_axis=1):
+    from skimage.io import imread
+    data = imread(path)
+    # if not there already, move ch and ut from their given positions to 0 and 1 axes
+    data = np.moveaxis(data, [channel_axis, ut_axis], [0, 1])
+    # TO DO: allow external reading of metadata
+    metadata_per_channel = []
+    metadata = {}
+    metadata['file_type'] = 'tif'
+    for channel in range(data.shape[0]):
+        metadata_per_channel.append(metadata)
+    return data, metadata_per_channel
+
+
+# Dictionary relating file extension to compatible reading function
+get_read_function_from_extension = {
+    '.tif': read_single_tif_file,
+    '.ptu': read_single_ptu_file,
+    '.sdt': read_single_sdt_file
+}
+
+def get_max_slice_shape_and_dtype(file_paths, file_extension):
+    # TO DO: offer fast reading option by calculating max shape from metadata (array may become bigger)
+    # Go through files to get max shape (number of photon bins may vary from image to image)
+    shapes_list = []
+    for file_path in file_paths:
+        if file_path.suffix == file_extension:
+            imread = get_read_function_from_extension[file_extension]
+            image_slice, _ = imread(file_path)
+            shapes_list.append(image_slice.shape) # (ch, ut, y, x)
+    # Get slice max shape (ch, mt, y, x)
+    return max(shapes_list), image_slice.dtype
+
+def make_full_numpy_stack(file_paths, file_extension):
+    # Read all images to get max slice shape
+    image_slice_shape, image_dtype = get_max_slice_shape_and_dtype(file_paths, file_extension)
+    imread = get_read_function_from_extension[file_extension]
+
+    list_of_time_point_paths = get_structured_list_of_paths(file_paths, file_extension)
+    z_list, t_list = [], []
+    for list_of_zslice_paths in list_of_time_point_paths:
+        for zslice_path in list_of_zslice_paths:
+            data, metadata_per_channel = imread(zslice_path)
+            z_slice = np.zeros(image_slice_shape, dtype=image_dtype)
+            z_slice[:data.shape[0], :data.shape[1], :data.shape[2], :data.shape[3]] = data
+            z_list.append(z_slice)
+        z_stack = np.stack(z_list)
+        t_list.append(z_stack)
+        z_list = []
+    stack = np.stack(t_list)
+    stack =  np.moveaxis(stack, [-4, -3], [0, 1]) # from (t, z, ch, ut, y, x) to (ch, ut, t, z, y, x)
+    return stack
+
+
+
+def get_current_tz(file_path):
+    pattern_t = '_t(\d+)'
+    pattern_z = '_z(\d+)'
+    current_t, current_z = None, None
+    file_name = file_path.stem
+    matches_z = re.search(pattern_z, file_name)
+    if matches_z is not None:
+        current_z = int(matches_z.group(1)) #.zfill(2)
+    matches_t = re.search(pattern_t, file_name)
+    if matches_t is not None:
+        current_t = int(matches_t.group(1))
+    return current_t, current_z
+
+def get_max_zslices(file_paths):
+    max_z = max([get_current_tz(file_path) for file_path in file_paths if file_path.suffix == '.ptu'])[1]
+    if max_z is None:
+        return 1
+    return max_z
+
+def get_max_time(file_paths):
+    max_time = max([get_current_tz(file_path) for file_path in file_paths if file_path.suffix == '.ptu'])[0]
+    if max_time is None:
+        return 1
+    return max_time
+
+def get_stack_estimated_sizes(file_paths, file_extension):
+    stack_size = 0
+    for file_path in file_paths:
+        if file_path.suffix == file_extension:
+            file_size = file_path.stat().st_size / 1e6 # in MB
+            stack_size += file_size
+    return stack_size
+
+def get_structured_list_of_paths(file_paths, file_extension):
+    t_path_list = []
+    z_path_list = []
+    file_paths = natsorted(file_paths)
+    previous_t = 1
+    for file_path in file_paths:
+        if file_path.suffix == file_extension:
+            current_t, current_z = get_current_tz(file_path)
+            if current_t is not None:
+                if current_t > previous_t:
+                    t_path_list.append(z_path_list)
+                    z_path_list = []
+                    previous_t = current_t
+                z_path_list.append(file_path)
+    # If no timepoints, z_path_list is file_paths
+    if current_t is None:
+        z_path_list = file_paths
+    # Append last timepoint
+    t_path_list.append(z_path_list)
+    return t_path_list
+
+
+##################################################
+
 
 # Read single ptu file
 def read_single_ptu_file(path):
@@ -167,93 +349,30 @@ def read_ptu_3D_data(file_paths, image_slice_shape):
 def read_ptu_data_3D_delayed(file_paths, image_slice_shape):
     return read_ptu_3D_data(file_paths, image_slice_shape)
 
-def get_current_tz(file_path):
-    pattern_t = '_t(\d+)'
-    pattern_z = '_z(\d+)'
-    current_t, current_z = None, None
-    file_name = file_path.stem
-    matches_z = re.search(pattern_z, file_name)
-    if matches_z is not None:
-        current_z = int(matches_z.group(1)) #.zfill(2)
-    matches_t = re.search(pattern_t, file_name)
-    if matches_t is not None:
-        current_t = int(matches_t.group(1))
-    return current_t, current_z
 
-def get_max_zslices(file_paths):
-    max_z = max([get_current_tz(file_path) for file_path in file_paths if file_path.suffix == '.ptu'])[1]
-    if max_z is None:
-        return 1
-    return max_z
 
-def get_max_time(file_paths):
-    max_time = max([get_current_tz(file_path) for file_path in file_paths if file_path.suffix == '.ptu'])[0]
-    if max_time is None:
-        return 1
-    return max_time
+# def get_structured_list_of_paths(file_paths):
+#     t_path_list = []
+#     z_path_list = []
+#     file_paths = natsorted(file_paths)
+#     previous_t = 1
+#     for file_path in file_paths:
+#         if file_path.suffix == '.ptu':
+#             current_t, current_z = get_current_tz(file_path)
+#             if current_t is not None:
+#                 if current_t > previous_t:
+#                     t_path_list.append(z_path_list)
+#                     z_path_list = []
+#                     previous_t = current_t
+#                 z_path_list.append(file_path)
+#     # If no timepoints, z+path_list is file_paths
+#     if current_t is None:
+#         z_path_list = file_paths
+#     # Append last timepoint
+#     t_path_list.append(z_path_list)
+#     return t_path_list
 
-def get_stack_estimated_sizes(file_paths):
-    max_t = get_max_time(file_paths)
-    max_z = get_max_zslices(file_paths)
-    time_stack_size = 0
-    for file_path in file_paths:
-        if file_path.suffix == '.ptu':
-            file_size = file_path.stat().st_size / 1e6 # in MB
-            time_stack_size += file_size
-    z_stack_estimated_size = time_stack_size / max_t
-    
-    return z_stack_estimated_size, time_stack_size
 
-def get_structured_list_of_paths(file_paths):
-    t_path_list = []
-    z_path_list = []
-    file_paths = natsorted(file_paths)
-    previous_t = 1
-    for file_path in file_paths:
-        if file_path.suffix == '.ptu':
-            current_t, current_z = get_current_tz(file_path)
-            if current_t is not None:
-                if current_t > previous_t:
-                    t_path_list.append(z_path_list)
-                    z_path_list = []
-                    previous_t = current_t
-                z_path_list.append(file_path)
-    # If no timepoints, z+path_list is file_paths
-    if current_t is None:
-        z_path_list = file_paths
-    # Append last timepoint
-    t_path_list.append(z_path_list)
-    return t_path_list
-
-def make_full_numpy_stack(file_paths, image_slice_shape, image_dtype):
-     # Make a dask stack
-    z_list, t_list = [], []
-    previous_t = 1
-    for file_path in file_paths:
-        if file_path.suffix == '.ptu':
-            current_t, current_z = get_current_tz(file_path)
-            #If time changed, append to t_list and clear z_list
-            if current_t is not None:
-                if current_t > previous_t:
-                    z_stack = np.stack(z_list)
-                    t_list.append(z_stack)
-                    z_list = []
-                    previous_t = current_t
-            data = read_ptu_data_2D(file_path)
-            # summed_intensity_image
-            # metadata_list
-            if current_z is not None:
-                z_slice = np.zeros(image_slice_shape, dtype=image_dtype)
-                z_slice[:data.shape[0], :data.shape[1], :data.shape[2], :data.shape[3]] = data
-                z_list.append(z_slice)
-    # If no timepoints, make zstack
-    if current_t is None:
-        z_stack = np.stack(z_list)
-    # Append last time point
-    t_list.append(z_stack)
-    stack = np.stack(t_list)
-    stack =  np.moveaxis(stack, [-4, -3], [1, 2]) # from (t,z,ch,mt, y, x) to (t, ch, mt, z, y, x)
-    return stack
 
 def make_dask_stack(file_paths, image_slice_shape, image_dtype):
     # Get maximum time and z from file names
