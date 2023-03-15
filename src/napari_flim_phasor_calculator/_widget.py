@@ -15,6 +15,7 @@ from napari import Viewer
 import numpy as np
 import pandas as pd
 from qtpy.QtWidgets import QWidget
+import dask.array as da
 # import napari_clusters_plotter
 
 
@@ -71,11 +72,21 @@ def make_flim_phasor_plot(image_layer : Image,
     label_image = np.arange(np.prod(dc.shape)).reshape(dc.shape) + 1
     label_image[~space_mask] = 0
     label_image = relabel_sequential(label_image)[0]
+    
+
+    g_flat_masked = np.ravel(g[space_mask])
+    s_flat_masked = np.ravel(s[space_mask])
+    if isinstance(g, da.Array):
+        g_flat_masked.compute_chunk_sizes()
+        s_flat_masked.compute_chunk_sizes()
 
     phasor_components = {'label': np.ravel(label_image[space_mask]), 
-                         'G': np.ravel(g[space_mask]),
-                         'S': np.ravel(s[space_mask])}
+                         'G': g_flat_masked,
+                         'S': s_flat_masked}
     table = pd.DataFrame(phasor_components)
+    # Temporary workaround to fit timelapse format!!
+    # label_image = label_image[np.newaxis, ...]
+    table['frame'] = 0
     
     # The layer has to be created here so the plotter can be filled properly
     # below. Overwrite layer if it already exists.
