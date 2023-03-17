@@ -80,9 +80,10 @@ def make_flim_phasor_plot(image_layer : Image,
         g_flat_masked.compute_chunk_sizes()
         s_flat_masked.compute_chunk_sizes()
 
-    phasor_components = {'label': np.ravel(label_image[space_mask]), 
-                         'G': g_flat_masked,
-                         'S': s_flat_masked}
+    phasor_components = pd.DataFrame({
+        'label': np.ravel(label_image[space_mask]), 
+        'G': g_flat_masked,
+        'S': s_flat_masked})
     table = pd.DataFrame(phasor_components)
     # Temporary workaround to fit timelapse format!!
     # label_image = label_image[np.newaxis, ...]
@@ -115,6 +116,7 @@ def make_flim_phasor_plot(image_layer : Image,
         #     widget_name='Plotter Widget')
     # Set G and S as features to plot (update_axes_list method clears Comboboxes)
     plotter_widget.update_axes_list() 
+    plotter_widget.layer_select.value = plotter_widget.layer_select.choices[-1] #Set layer on top (labels)
     plotter_widget.plot_x_axis.setCurrentIndex(1)
     plotter_widget.plot_y_axis.setCurrentIndex(2)
     # Show parent (PlotterWidget) so that run function can run properly
