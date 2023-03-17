@@ -24,20 +24,44 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 '''
+import numba as nb
+import numpy as np
+import dask.array as da
 
 def get_phasor_components(flim_data, harmonic=1):
     '''
     Calculate phasor components G and S from the Fourier transform.
     '''
     import numpy as np
-    flim_data_fft = np.fft.fft(flim_data, axis=0)
-    dc = flim_data_fft[0].real
+    if isinstance(flim_data, da.Array):
+        fft_slice_function = fft_slice_4d_dask
+    else:
+        fft_slice_function = fft_slice_4d
+
+    dc, _ = fft_slice_function(flim_data, 0)
     # change the zeros to the img average
     dc = np.where(dc != 0, dc, int(np.mean(dc)))
-    
-    g = flim_data_fft[harmonic].real
+
+    g, s = fft_slice_function(flim_data, harmonic)
     g /= dc
-    s = flim_data_fft[harmonic].imag
     s /= -dc
 
     return g, s, dc
+
+@nb.njit
+def jit_fft(a, axis=-1):
+    """Numba fft version with rocket-fft"""
+    return np.fft.fft(a, axis=axis)
+
+def fft_slice_4d(arr, slice_num):
+    """Slice of FFT over first axis of a numpy array"""
+    fft_arr = jit_fft(arr, axis=0)
+    # Return the specified slice of the FFT array
+    return fft_arr[slice_num, ...].real, fft_arr[slice_num, ...].imag
+
+def fft_slice_4d_dask(arr, slice_num):
+    """Slice of FFT over first axis of a dask array"""
+    # Dask fft along first axis
+    fft_arr = da.fft.fft(arr, axis=0)
+    # Return the specified slice of the FFT array
+    return fft_arr[slice_num, ...].real, fft_arr[slice_num, ...].imag
