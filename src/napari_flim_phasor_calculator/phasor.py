@@ -1,36 +1,37 @@
-'''
-This function was adapted from PhasorPy v1.0.2 
-(https://pypi.org/project/PhasorPy)
-
-MIT License
-
-Copyright (c) 2022 Bruno Schuty
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-'''
 import numba as nb
 import numpy as np
 import dask.array as da
 
+
 def get_phasor_components(flim_data, harmonic=1):
     '''
     Calculate phasor components G and S from the Fourier transform.
+
+
+    This function was adapted from PhasorPy v1.0.2
+    (https://pypi.org/project/PhasorPy)
+
+    MIT License
+
+    Copyright (c) 2022 Bruno Schuty
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in all
+    copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+    SOFTWARE.
     '''
     import numpy as np
     if isinstance(flim_data, da.Array):
@@ -48,16 +49,19 @@ def get_phasor_components(flim_data, harmonic=1):
 
     return g, s, dc
 
+
 @nb.njit
 def jit_fft(a, axis=-1):
     """Numba fft version with rocket-fft"""
     return np.fft.fft(a, axis=axis)
+
 
 def fft_slice_4d(arr, slice_num):
     """Slice of FFT over first axis of a numpy array"""
     fft_arr = jit_fft(arr, axis=0)
     # Return the specified slice of the FFT array
     return fft_arr[slice_num, ...].real, fft_arr[slice_num, ...].imag
+
 
 def fft_slice_4d_dask(arr, slice_num):
     """Slice of FFT over first axis of a dask array"""
