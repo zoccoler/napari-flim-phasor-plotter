@@ -9,10 +9,8 @@ import numpy as np
 from napari_flim_phasor_calculator._io.readPTU_FLIM import PTUreader
 import sdtfile
 from pathlib import Path
-import os
 import re
 import dask.array as da
-import dask
 from natsort import natsorted
 from napari.utils import notifications
 
