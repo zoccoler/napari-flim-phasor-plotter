@@ -8,9 +8,12 @@ contributions:
     - id: napari-flim-phasor-calculator.make_sample_data
       python_name: napari_flim_phasor_calculator._sample_data:make_sample_data
       title: Load sample data from FLIM phasor calculator
-    - id: napari-flim-phasor-calculator.make_func_widget
+    - id: napari-flim-phasor-calculator.build_phasor_plot
       python_name: napari_flim_phasor_calculator._widget:make_flim_phasor_plot
-      title: Make FLIM Label Layer
+      title: Make FLIM Phasor Plot
+    - id: napari-flim-phasor-calculator.convert_to_zarr
+      python_name: napari_flim_phasor_calculator._io.convert_to_zarr:convert_folder_to_zarr
+      title: Convert to zarr
   readers:
     - command: napari-flim-phasor-calculator.get_reader
       accepts_directories: true
@@ -20,5 +23,7 @@ contributions:
       display_name: FLIM phasor calculator
       key: unique_id.1
   widgets:
-    - command: napari-flim-phasor-calculator.make_func_widget
+    - command: napari-flim-phasor-calculator.build_phasor_plot
       display_name: Make FLIM Phasor Plot
+    - command: napari-flim-phasor-calculator.convert_to_zarr
+      display_name: Convert to zarr
