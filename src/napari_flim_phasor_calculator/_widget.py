@@ -1,23 +1,11 @@
-"""
-This module is an example of a barebones QWidget plugin for napari
-
-It implements the Widget specification.
-see: https://napari.org/stable/plugins/guides.html?#widgets
-
-Replace code below according to your needs.
-"""
 from typing import TYPE_CHECKING
 
 from magicgui import magic_factory
-from napari.types import LayerDataTuple
 from napari.layers import Image, Labels
 from napari import Viewer
 import numpy as np
 import pandas as pd
-from qtpy.QtWidgets import QWidget
 import dask.array as da
-# import napari_clusters_plotter
-
 
 from .phasor import get_phasor_components
 from .filters import make_time_mask, make_space_mask_from_manual_threshold
