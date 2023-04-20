@@ -26,6 +26,8 @@ def test_make_flim_phasor_plot(make_napari_viewer, capsys):
     my_widget()
 
     labels_layer = viewer.layers[-1]
-
+    print(labels_layer.features)
     assert len(viewer.layers) == 2
+    assert list(labels_layer.features.index) == [0, 1, 2, 3, 4, 5, 6, 7, 8]
+    assert list(labels_layer.features.columns) == ['label', 'G', 'S', 'frame']
     assert labels_layer.features.shape == (9, 4)
