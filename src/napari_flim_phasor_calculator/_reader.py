@@ -177,7 +177,8 @@ def flim_file_reader(path):
             data, metadata_list = imread(file_path)  # (ch, ut, y, x)
             print('stack = False\n', 'data type: ', file_extension, '\ndata_shape = ', data.shape, '\n')
             data = np.expand_dims(data, axis=(2, 3))  # (ch, ut, t, z, y, x)
-
+        if data is None:
+            return [(np.zeros((1, 1, 1, 1, 1, 1)), {'name': 'too big: convert to zarr first'}, 'image')]
         summed_intensity_image = np.sum(data, axis=1, keepdims=True)
         # arguments for TCSPC stack
         add_kwargs = {'channel_axis': 0, 'metadata': metadata_list}
@@ -203,16 +204,16 @@ def read_stack(folder_path):
         file_paths = natsorted([file_path for file_path in folder_path.iterdir() if file_path.suffix == file_extension])
         # Estimate stack sizes
         # TO DO: estimate stack size from shape and dtype instead of file size (to handle compressed files)
-        stack_size_in_MB = get_stack_estimated_sizes(file_paths, file_extension)
+        stack_size_in_MB = get_stack_estimated_size(file_paths, file_extension)
         if stack_size_in_MB < 2e3:  # 2GB
             # read full stack
             data = make_full_numpy_stack(file_paths, file_extension)
             # TO DO: Get metadata
             metadata_list = []
         else:
-            notifications.show_warning('Stack is larger than 2GB, please convert to .zarr')
+            notifications.show_error('Stack is larger than 2GB, please convert to .zarr')
             print('Stack is larger than 2GB, please convert to .zarr')
-            return
+            return None, None
     # TO DO: remove print
     print('stack = True\n', 'data type: ', file_extension, '\ndata_shape = ', data.shape, '\n')
 
@@ -295,11 +296,16 @@ def get_max_time_points(file_paths, file_extension):
     return max_time
 
 
-def get_stack_estimated_sizes(file_paths, file_extension):
+def get_stack_estimated_size(file_paths, file_extension, from_file_size=False):
     stack_size = 0
     for file_path in file_paths:
         if file_path.suffix == file_extension:
-            file_size = file_path.stat().st_size / 1e6  # in MB
+            if from_file_size:
+                file_size = file_path.stat().st_size / 1e6  # in MB
+            else:
+                imread = get_read_function_from_extension[file_extension]
+                data, metadata_list = imread(file_path)  # (ch, ut, y, x)
+                file_size = data.nbytes / 1e6  # in MB
             stack_size += file_size
     return stack_size
 
