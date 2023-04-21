@@ -1,18 +1,4 @@
-"""
-This module is an example of a barebones numpy reader plugin for napari.
-
-It implements the Reader specification, but your plugin may choose to
-implement multiple readers or even other plugin contributions. see:
-https://napari.org/stable/plugins/guides.html?#readers
-"""
 import numpy as np
-from napari_flim_phasor_calculator._io.readPTU_FLIM import PTUreader
-import sdtfile
-from pathlib import Path
-import re
-import dask.array as da
-from natsort import natsorted
-from napari.utils import notifications
 
 ALLOWED_FILE_EXTENSION = [
     '.ptu',
@@ -46,6 +32,7 @@ def napari_get_reader(path):
 
 def read_single_ptu_file(path):
     """Read a single ptu file."""
+    from napari_flim_phasor_calculator._io.readPTU_FLIM import PTUreader
     ptu_file = PTUreader(path, print_header_data=False)
     data, _ = ptu_file.get_flim_data_stack()
     # from (x, y, ch, ut) to (ch, ut, y, x)
@@ -62,6 +49,7 @@ def read_single_ptu_file(path):
 
 def read_single_sdt_file(path):
     """Read a single sdt file."""
+    import sdtfile
     sdt_file = sdtfile.SdtFile(path)  # header to be implemented
     data_raw = np.asarray(sdt_file.data)  # option to choose channel to include
     # from (ch, y, x, ut) to (ch, ut, y, x)
@@ -99,6 +87,19 @@ get_read_function_from_extension = {
 
 
 def get_most_frequent_file_extension(path):
+    """Get most frequent file extension in path.
+
+    Parameters
+    ----------
+    path : str or list of str
+        Path to file, or list of paths.
+
+    Returns
+    -------
+    most_frequent_file_type : str
+        Most frequent file extension in path.
+    """
+    from pathlib import Path
     # Check if path is a list of paths
     if isinstance(path, list):
         # reader plugins may be handed single path, or a list of paths.
@@ -137,27 +138,23 @@ def recarray_to_dict(recarray):
 
 
 def flim_file_reader(path):
-    """Take a path or list of paths and return a list of LayerData tuples.
-
-    Readers are expected to return data as a list of tuples, where each tuple
-    is (data, [add_kwargs, [layer_type]]), "add_kwargs" and "layer_type" are
-    both optional.
+    """Take a path or list of paths to FLIM images and return a list of LayerData tuples.
 
     Parameters
     ----------
     path : str or list of str
-        Path to file, or list of paths.
+        Path to file, folder or list of paths. If path to a folder, it assumes it is a stack with a
+        standard file naming convention, like image_t000_z000.tif, image_t000_z001.tif, etc.
 
     Returns
     -------
     layer_data : list of tuples
         A list of LayerData tuples where each tuple in the list contains
-        (data, metadata, layer_type), where data is a numpy array, metadata is
+        (data, metadata, layer_type), where data is a numpy or dask array, metadata is
         a dict of keyword arguments for the corresponding viewer.add_* method
-        in napari, and layer_type is a lower-case string naming the type of
-        layer. Both "meta", and "layer_type" are optional. napari will
-        default to layer_type=="image" if not provided
+        in napari along with other FLIM metadata, and layer_type is 'image'. 
     """
+    from pathlib import Path
     # handle both a string and a list of strings
     paths = [path] if isinstance(path, str) else path
     # Use Path from pathlib
@@ -175,22 +172,38 @@ def flim_file_reader(path):
             file_extension = file_path.suffix
             imread = get_read_function_from_extension[file_extension]
             data, metadata_list = imread(file_path)  # (ch, ut, y, x)
-            print('stack = False\n', 'data type: ', file_extension, '\ndata_shape = ', data.shape, '\n')
             data = np.expand_dims(data, axis=(2, 3))  # (ch, ut, t, z, y, x)
-
+        if data is None:
+            return [(np.zeros((1, 1, 1, 1, 1, 1)), {'name': 'too big: convert to zarr first'}, 'image')]
         summed_intensity_image = np.sum(data, axis=1, keepdims=True)
         # arguments for TCSPC stack
         add_kwargs = {'channel_axis': 0, 'metadata': metadata_list}
         layer_type = "image"
         layer_data.append((data, add_kwargs, layer_type))
         # arguments for intensity image
-        add_kwargs = {'channel_axis': 0, 'metadata': metadata_list, 'name': 'summed_intensity_image_' + Path(path).stem}
+        add_kwargs = {'channel_axis': 0, 'metadata': metadata_list,
+                      'name': 'summed_intensity_image_' + Path(path).stem}
         layer_data.append((summed_intensity_image, add_kwargs, layer_type))
     return layer_data
 
 
 def read_stack(folder_path):
+    """Read a stack of FLIM images.
+
+    Parameters
+    ----------
+    folder_path : str
+        Path to folder containing FLIM images.
+
+    Returns
+    -------
+    data, metadata_list : Tuple(array, List(dict))
+        Array containing the FLIM images and a metadata list (one metadata per channel).
+    """
     import zarr
+    import dask.array as da
+    from natsort import natsorted
+    from napari.utils import notifications
     file_extension = get_most_frequent_file_extension(folder_path)
     if file_extension == '.zarr':
         file_paths = folder_path
@@ -200,27 +213,44 @@ def read_stack(folder_path):
         metadata_list = []
     else:
         # Get all file path with specified file extension
-        file_paths = natsorted([file_path for file_path in folder_path.iterdir() if file_path.suffix == file_extension])
+        file_paths = natsorted([file_path for file_path in folder_path.iterdir(
+        ) if file_path.suffix == file_extension])
         # Estimate stack sizes
         # TO DO: estimate stack size from shape and dtype instead of file size (to handle compressed files)
-        stack_size_in_MB = get_stack_estimated_sizes(file_paths, file_extension)
+        stack_size_in_MB = get_stack_estimated_size(file_paths, file_extension)
         if stack_size_in_MB < 2e3:  # 2GB
             # read full stack
-            data = make_full_numpy_stack(file_paths, file_extension)
-            # TO DO: Get metadata
-            metadata_list = []
+            data, metadata_list = make_full_numpy_stack(
+                file_paths, file_extension)
         else:
-            notifications.show_warning('Stack is larger than 2GB, please convert to .zarr')
+            notifications.show_error(
+                'Stack is larger than 2GB, please convert to .zarr')
             print('Stack is larger than 2GB, please convert to .zarr')
-            return
+            return None, None
     # TO DO: remove print
-    print('stack = True\n', 'data type: ', file_extension, '\ndata_shape = ', data.shape, '\n')
+    print('stack = True\n', 'data type: ', file_extension,
+          '\ndata_shape = ', data.shape, '\n')
 
     return data, metadata_list
 
 
 def get_max_slice_shape_and_dtype(file_paths, file_extension):
-    """Go through files to get max shape (number of photon bins may vary from image to image)"""
+    """Get max slice shape and dtype.
+
+    Go through files to get max shape (number of photon bins may vary from image to image)
+
+    Parameters
+    ----------
+    file_paths : List of paths
+        A list of Path objects from pathlib.
+    file_extension : str
+        A file extension, like '.tif' or '.ptu'.
+
+    Returns
+    -------
+    max_shape, data_type : Tuple(Tuple(int), numpy.dtype)
+        Max shape and data type.
+    """
     # TO DO: offer fast reading option by calculating max shape from metadata (array may become bigger)
     shapes_list = []
     for file_path in file_paths:
@@ -244,30 +274,47 @@ def make_full_numpy_stack(file_paths, file_extension):
 
     Returns
     -------
-    numpy_stack : numpy array
-        A numpy array of shape (ch, ut, t, z, y, x).
+    numpy_stack, metadata_per_channel : Tuple(numpy array, List(dict))
+        A numpy array of shape (ch, ut, t, z, y, x) and a metadata list (one metadata per channel).
     """
     # Read all images to get max slice shape
-    image_slice_shape, image_dtype = get_max_slice_shape_and_dtype(file_paths, file_extension)
+    image_slice_shape, image_dtype = get_max_slice_shape_and_dtype(
+        file_paths, file_extension)
     imread = get_read_function_from_extension[file_extension]
 
-    list_of_time_point_paths = get_structured_list_of_paths(file_paths, file_extension)
+    list_of_time_point_paths = get_structured_list_of_paths(
+        file_paths, file_extension)
     z_list, t_list = [], []
     for list_of_zslice_paths in list_of_time_point_paths:
         for zslice_path in list_of_zslice_paths:
             data, metadata_per_channel = imread(zslice_path)
             z_slice = np.zeros(image_slice_shape, dtype=image_dtype)
-            z_slice[:data.shape[0], :data.shape[1], :data.shape[2], :data.shape[3]] = data
+            z_slice[:data.shape[0], :data.shape[1],
+                    :data.shape[2], :data.shape[3]] = data
             z_list.append(z_slice)
         z_stack = np.stack(z_list)
         t_list.append(z_stack)
         z_list = []
     stack = np.stack(t_list)
-    stack = np.moveaxis(stack, [-4, -3], [0, 1])  # from (t, z, ch, ut, y, x) to (ch, ut, t, z, y, x)
-    return stack
+    # from (t, z, ch, ut, y, x) to (ch, ut, t, z, y, x)
+    stack = np.moveaxis(stack, [-4, -3], [0, 1])
+    return stack, metadata_per_channel
 
 
 def get_current_tz(file_path):
+    """Get current time point and z slice from file name.
+
+    Parameters
+    ----------
+    file_path : Path
+        A Path object from pathlib. It expects a file name with '_t' and '_z' patterns.
+
+    Returns
+    -------
+    current_t, current_z : Tuple(int, int)
+        Current time point and z slice.
+    """
+    import re
     pattern_t = '_t(\\d+)'
     pattern_z = '_z(\\d+)'
     current_t, current_z = None, None
@@ -282,29 +329,96 @@ def get_current_tz(file_path):
 
 
 def get_max_zslices(file_paths, file_extension):
-    max_z = max([get_current_tz(file_path) for file_path in file_paths if file_path.suffix == file_extension])[1]
+    """Get max z slices.
+
+    Parameters
+    ----------
+    file_paths : List of paths
+        A list of Path objects from pathlib.
+    file_extension : str
+        A file extension, like '.tif' or '.ptu'.
+
+    Returns
+    -------
+    max_z : int
+        Max z slices.
+    """
+    max_z = max([get_current_tz(file_path)
+                for file_path in file_paths if file_path.suffix == file_extension])[1]
     if max_z is None:
         return 1
     return max_z
 
 
 def get_max_time_points(file_paths, file_extension):
-    max_time = max([get_current_tz(file_path) for file_path in file_paths if file_path.suffix == file_extension])[0]
+    """Get max time points.
+
+    Parameters
+    ----------
+    file_paths : List of paths
+        A list of Path objects from pathlib.
+    file_extension : str
+        A file extension, like '.tif' or '.ptu'.
+
+    Returns
+    -------
+    max_time : int
+        Max time points.
+    """
+    max_time = max([get_current_tz(file_path)
+                   for file_path in file_paths if file_path.suffix == file_extension])[0]
     if max_time is None:
         return 1
     return max_time
 
 
-def get_stack_estimated_sizes(file_paths, file_extension):
+def get_stack_estimated_size(file_paths, file_extension, from_file_size=False):
+    """Get stack estimated size.
+
+    Parameters
+    ----------
+    file_paths : List of paths
+        A list of Path objects from pathlib.
+    file_extension : str
+        A file extension, like '.tif' or '.ptu'.
+    from_file_size : bool, optional
+        If True, the file size is used to estimate the stack size. If False, the stack size is estimated from the
+        image size (slower, but more accurate for compressed files). The default is False.
+
+    Returns
+    -------
+    stack_size : float
+        Stack size in MB.
+    """
     stack_size = 0
     for file_path in file_paths:
         if file_path.suffix == file_extension:
-            file_size = file_path.stat().st_size / 1e6  # in MB
+            if from_file_size:
+                file_size = file_path.stat().st_size / 1e6  # in MB
+            else:
+                imread = get_read_function_from_extension[file_extension]
+                data, metadata_list = imread(file_path)  # (ch, ut, y, x)
+                file_size = data.nbytes / 1e6  # in MB
             stack_size += file_size
     return stack_size
 
 
 def get_structured_list_of_paths(file_paths, file_extension):
+    """Get structured list of paths.
+
+    Parameters
+    ----------
+    file_paths : List of paths
+        A list of Path objects from pathlib.
+    file_extension : str
+        A file extension, like '.tif' or '.ptu'.
+
+    Returns
+    -------
+    t_path_list : List of lists of paths
+        A list of lists of Path objects from pathlib. The first list is the time points, the second list is the z slices.
+    """
+    from natsort import natsorted
     t_path_list = []
     z_path_list = []
     file_paths = natsorted(file_paths)

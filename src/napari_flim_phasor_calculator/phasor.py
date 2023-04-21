@@ -1,14 +1,23 @@
 import numba as nb
 import numpy as np
-import dask.array as da
 
 
 def get_phasor_components(flim_data, harmonic=1):
-    '''
-    Calculate phasor components G and S from the Fourier transform.
+    """Calculate phasor components G and S from the Fourier transform.
 
+    Parameters
+    ----------
+    flim_data : np.ndarray or da.Array
+        FLIM data with dimensions (ut, time, z, y, x). microtime must be the first dimention. time and z are optional.
+    harmonic : int, optional
+        Harmonic to calculate, by default 1
 
-    This function was adapted from PhasorPy v1.0.2
+    Returns
+    -------
+    Tuple[np.ndarray, np.ndarray, np.ndarray]
+        G, S, and DC components.
+
+    This function was adapted and modified based on PhasorPy v1.0.2
     (https://pypi.org/project/PhasorPy)
 
     MIT License
@@ -32,8 +41,8 @@ def get_phasor_components(flim_data, harmonic=1):
     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
     SOFTWARE.
-    '''
-    import numpy as np
+    """
+    import dask.array as da
     if isinstance(flim_data, da.Array):
         fft_slice_function = fft_slice_4d_dask
     else:
@@ -65,6 +74,7 @@ def fft_slice_4d(arr, slice_num):
 
 def fft_slice_4d_dask(arr, slice_num):
     """Slice of FFT over first axis of a dask array"""
+    import dask.array as da
     # Dask fft along first axis
     fft_arr = da.fft.fft(arr, axis=0)
     # Return the specified slice of the FFT array
