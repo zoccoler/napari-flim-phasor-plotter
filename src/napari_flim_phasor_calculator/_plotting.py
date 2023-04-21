@@ -1,5 +1,6 @@
 from napari_clusters_plotter._plotter import PlotterWidget
 from qtpy.QtCore import QSize
+import numpy as np
 
 
 def add_phasor_circle(ax):
@@ -48,12 +49,19 @@ class PhasorPlotterWidget(PlotterWidget):
         super().__init__(napari_viewer)
         self.setMinimumSize(QSize(100, 300))
 
+    def frame_changed(event):
+        # Workaroud for napari-clusters-plotter using first axis as time axis (here it is the second axis)
+        event.value = tuple(
+            np.roll(np.array(event.viewer.dims.current_step), -1))
+        super().frame_changed(event)
+
     def run(self,
             features,
             plot_x_axis_name,
             plot_y_axis_name,
             plot_cluster_name=None,
             redraw_cluster_image=True,):
+        # Call the parent class run method and add the phasor circle on top
         super().run(features=features,
                     plot_x_axis_name=plot_x_axis_name,
                     plot_y_axis_name=plot_y_axis_name,

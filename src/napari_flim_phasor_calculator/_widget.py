@@ -124,6 +124,8 @@ def make_flim_phasor_plot(image_layer: "napari.layers.Image",
         widgets = napari_viewer.window._dock_widgets['Plotter Widget']
         plotter_widget = widgets.findChild(PhasorPlotterWidget)
 
+    plotter_widget.frame = napari_viewer.dims.current_step[1]
+
     # UPDATE to line below once clusters_plotter updates with support to other layers
     # plotter_widget.layer_select.value = plotter_widget.layer_select.choices[-1]  # Set layer on top (labels)
     # Set layer on top (labels)
