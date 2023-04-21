@@ -2,7 +2,6 @@ import numpy as np
 
 from napari_flim_phasor_calculator import napari_get_reader
 
-# To do: Get a sample file to test reader
 
 # # tmp_path is a pytest fixture
 # def test_reader(tmp_path):

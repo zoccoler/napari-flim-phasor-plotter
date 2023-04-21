@@ -13,8 +13,8 @@ contributions:
       title: Make FLIM Label Layer
   readers:
     - command: napari-flim-phasor-calculator.get_reader
-      accepts_directories: false
-      filename_patterns: ['*.ptu', '*.PTU', '*.sdt', '*.SDT']
+      accepts_directories: true
+      filename_patterns: ['*.ptu', '*.PTU', '*.sdt', '*.SDT', '*.tif', '*.zarr']
   sample_data:
     - command: napari-flim-phasor-calculator.make_sample_data
       display_name: FLIM phasor calculator
