@@ -2,6 +2,7 @@ from napari_flim_phasor_calculator._widget import make_flim_phasor_plot
 from napari_flim_phasor_calculator._synthetic import make_synthetic_flim_data
 from napari_flim_phasor_calculator._synthetic import create_time_array
 import numpy as np
+import pandas as pd
 # make_napari_viewer is a pytest fixture that returns a napari viewer object
 # capsys is a pytest fixture that captures stdout and stderr output streams
 
