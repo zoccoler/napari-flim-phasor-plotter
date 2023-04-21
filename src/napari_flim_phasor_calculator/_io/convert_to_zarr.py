@@ -13,8 +13,7 @@ from magicgui.tqdm import tqdm
 #     widget.call_button.clicked.connect(toggle_cancel_button_visibility)
 
 
-@magic_factory(widget_init=_connect_events,
-               call_button='Convert', layout="vertical",
+@magic_factory(call_button='Convert', layout="vertical",
                folder_path={'widget_type': 'FileEdit',
                             'mode': 'd'},
                cancel_button={'widget_type': 'PushButton',
