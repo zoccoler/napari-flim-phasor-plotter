@@ -23,9 +23,15 @@ This plugin integrates with [napari-clusters-plotter plugin](https://github.com/
 
 This plugin can read the following FLIM file types:
   - ".ptu"
+  - ".sdt"
+  - ".tif"
+  - ".zarr"
 
 This plugin works with the following data shapes:
-  - 2D timelapse, where time is the first dimension.
+  - 2D FLIM images (actually 3D data where FLIM counts are in the first axis).
+  - 3D FLIM images (actually 4D data where FLIM counts are in the first axis).
+  - 3D timelapse FLIM images (actually 5D data where FLIM counts are in the first axis).
+  - Multichannel '.tif' or '.zarr' data may need to be loaded separately.
 
 ## Installation
 
