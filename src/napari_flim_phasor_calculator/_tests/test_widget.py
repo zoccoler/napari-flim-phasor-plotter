@@ -1,7 +1,7 @@
 from napari_flim_phasor_calculator._widget import make_flim_phasor_plot
 from napari_flim_phasor_calculator._synthetic import make_synthetic_flim_data
 from napari_flim_phasor_calculator._synthetic import create_time_array
-import pandas as pd
+import numpy as np
 # make_napari_viewer is a pytest fixture that returns a napari viewer object
 # capsys is a pytest fixture that captures stdout and stderr output streams
 
@@ -37,5 +37,5 @@ def test_make_flim_phasor_plot(make_napari_viewer, capsys):
     assert len(viewer.layers) == 2
     assert list(labels_layer.features.columns) == ['label', 'G', 'S', 'frame']
     assert labels_layer.features.shape == (7, 4)
-    assert pd.testing.assert_frame_equal(
-        labels_layer.features, output_table, check_dtype=False, rtol=1e-5, atol=1e-5)
+    assert np.allclose(labels_layer.features.values,
+                       output_table.values, rtol=0, atol=1e-5)
