@@ -58,8 +58,11 @@ def apply_median_filter(image, n=1):
     import numpy as np
     from skimage.filters import median
     from skimage.morphology import cube
+    assert len(image.shape) == 5, "Image must have 5 dimensions, even if unitary (ut, time, z, y, x)"
     footprint = cube(3)
     image_filt = np.copy(image)
     for i in range(n):
-        image_filt = median(image_filt, footprint)
+        for ut in range(image.shape[0]):
+            for c in range(image.shape[1]):
+                image_filt[ut, c] = median(image_filt[ut, c], footprint)
     return image_filt
