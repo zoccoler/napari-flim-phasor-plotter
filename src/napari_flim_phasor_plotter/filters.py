@@ -14,7 +14,7 @@ def make_time_mask(image, laser_frequency):
         Time mask
     '''
     import numpy as np
-    from napari_flim_phasor_calculator._synthetic import create_time_array
+    from napari_flim_phasor_plotter._synthetic import create_time_array
     # create time array based on laser frequency
     time_array = create_time_array(
         laser_frequency, n_points=image.shape[0])  # ut axis
