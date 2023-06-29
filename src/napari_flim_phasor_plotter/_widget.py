@@ -54,10 +54,10 @@ def make_flim_phasor_plot(image_layer: "napari.layers.Image",
     from skimage.segmentation import relabel_sequential
     from napari.layers import Labels
 
-    from napari_flim_phasor_calculator.phasor import get_phasor_components
-    from napari_flim_phasor_calculator.filters import make_time_mask, make_space_mask_from_manual_threshold
-    from napari_flim_phasor_calculator.filters import apply_median_filter
-    from napari_flim_phasor_calculator._plotting import PhasorPlotterWidget
+    from napari_flim_phasor_plotter.phasor import get_phasor_components
+    from napari_flim_phasor_plotter.filters import make_time_mask, make_space_mask_from_manual_threshold
+    from napari_flim_phasor_plotter.filters import apply_median_filter
+    from napari_flim_phasor_plotter._plotting import PhasorPlotterWidget
 
     image = image_layer.data
     if 'file_type' in image_layer.metadata:
