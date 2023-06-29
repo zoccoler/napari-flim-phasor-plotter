@@ -32,7 +32,8 @@ def napari_get_reader(path):
 
 def read_single_ptu_file(path):
     """Read a single ptu file."""
-    from napari_flim_phasor_calculator._io.readPTU_FLIM import PTUreader
+    from napari_flim_phasor_plotter._io.readPTU_FLIM import PTUreader
+
     ptu_file = PTUreader(path, print_header_data=False)
     data, _ = ptu_file.get_flim_data_stack()
     # from (x, y, ch, ut) to (ch, ut, y, x)
@@ -152,7 +153,7 @@ def flim_file_reader(path):
         A list of LayerData tuples where each tuple in the list contains
         (data, metadata, layer_type), where data is a numpy or dask array, metadata is
         a dict of keyword arguments for the corresponding viewer.add_* method
-        in napari along with other FLIM metadata, and layer_type is 'image'. 
+        in napari along with other FLIM metadata, and layer_type is 'image'.
     """
     from pathlib import Path
     # handle both a string and a list of strings
