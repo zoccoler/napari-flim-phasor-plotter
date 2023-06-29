@@ -36,9 +36,9 @@ name. The z slice and time point must be separated by an underscore.
     import dask.array as da
     from pathlib import Path
     from natsort import natsorted
-    from napari_flim_phasor_calculator._reader import get_read_function_from_extension, get_most_frequent_file_extension
-    from napari_flim_phasor_calculator._reader import get_max_slice_shape_and_dtype, get_structured_list_of_paths
-    from napari_flim_phasor_calculator._reader import get_max_zslices, get_max_time_points, ALLOWED_FILE_EXTENSION
+    from napari_flim_phasor_plotter._reader import get_read_function_from_extension, get_most_frequent_file_extension
+    from napari_flim_phasor_plotter._reader import get_max_slice_shape_and_dtype, get_structured_list_of_paths
+    from napari_flim_phasor_plotter._reader import get_max_zslices, get_max_time_points, ALLOWED_FILE_EXTENSION
 
     folder_path = Path(folder_path)
     file_extension = get_most_frequent_file_extension(folder_path)
