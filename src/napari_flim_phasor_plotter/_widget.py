@@ -142,9 +142,9 @@ def make_flim_phasor_plot(image_layer: "napari.layers.Image",
 
     # Update laser frequency spinbox
     # TO DO: access and update widget in a better way
-    if 'Make FLIM Phasor Plot (napari-flim-phasor-calculator)' in dock_widgets_names:
+    if 'Make FLIM Phasor Plot (napari-flim-phasor-plotter)' in dock_widgets_names:
         widgets = napari_viewer.window._dock_widgets[
-            'Make FLIM Phasor Plot (napari-flim-phasor-calculator)']
+            'Make FLIM Phasor Plot (napari-flim-phasor-plotter)']
         laser_frequency_spinbox = widgets.children()[4].children()[
             2].children()[-1]
         # Set precision of spinbox based on number of decimals in laser_frequency
