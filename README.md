@@ -7,7 +7,7 @@
 [![codecov](https://codecov.io/gh/zoccoler/napari-flim-phasor-plotter/branch/main/graph/badge.svg)](https://codecov.io/gh/zoccoler/napari-flim-phasor-plotter)
 [![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-flim-phasor-plotter)](https://napari-hub.org/plugins/napari-flim-phasor-plotter)
 
-A napari plugin to generate a phasor plot for TCSPC FLIM data. 
+A napari plugin to generate an ineractive phasor plot for TCSPC FLIM data. 
 
 ----------------------------------
 
@@ -39,15 +39,15 @@ You can install `napari-flim-phasor-plotter` via [pip]. Currently, only the deve
 
 Create a conda environment:
 
-    conda create -n napari-flim-phasor python=3.9
+    conda create -n napari-flim-phasor-env python=3.9
     
 Activate the environment:
 
-    conda activate napari-flim-phasor
+    conda activate napari-flim-phasor-env
     
-Then install napari (and git if on Windows):
+Then install napari and napari-clusturs-plotter (plus git if on Windows):
 
-    conda install -c conda-forge napari git
+    conda install -c conda-forge napari napari-clusters-plotter git
     
 And finally install the plugin development version with:
 
