@@ -1,3 +1,8 @@
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import napari.types
+
 def make_time_mask(image, laser_frequency):
     '''
     Create a time mask from the image histogram maximum onwards
@@ -68,3 +73,38 @@ def apply_median_filter(image, n=1):
             for t in range(image.shape[1]):
                 image_filt[ut, t] = median(image_filt[ut, t], footprint)
     return image_filt
+
+def apply_binning(flim_image: "napari.types.ImageData", 
+                       bin_size: int = 2, 
+                       binning_3D: bool = True) -> "napari.types.ImageData":
+    """
+    Apply binning to TCSPC FLIM image.
+
+    Parameters
+    ----------
+    flim_image: array
+        The FLIM timelapse image
+    bin_size : int, optional
+        size of binning kernel, by default 2
+    binning_3D : bool, optional
+        if True, applies a 3D binning kernel, 
+        if False, applies a 2D binning kernel to each slice, 
+        by default True
+    """
+    import numpy as np
+    from scipy.ndimage import convolve
+
+    image_binned = np.zeros_like(flim_image)
+
+    if binning_3D:
+        kernel=np.full((bin_size, bin_size, bin_size), 1)
+
+        for  utime, time in np.ndindex(flim_image.shape[0], flim_image.shape[1]):
+            image_binned[utime, time, :, :, :] = convolve(flim_image[utime, time, :, :, :],kernel)
+    else:
+        kernel=np.full((bin_size, bin_size), 1)
+
+        for  utime, time, z in np.ndindex(flim_image.shape[0], flim_image.shape[1], flim_image.shape[2]):
+            image_binned[utime, time, z, :, :] = convolve(flim_image[utime, time, z, :, :],kernel)
+    
+    return(image_binned)
