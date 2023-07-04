@@ -1,6 +1,6 @@
 import numpy as np
 
-from napari_flim_phasor_calculator import napari_get_reader
+from napari_flim_phasor_plotter import napari_get_reader
 
 
 # # tmp_path is a pytest fixture

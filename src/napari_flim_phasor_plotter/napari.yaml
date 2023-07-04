@@ -1,0 +1,29 @@
+name: napari-flim-phasor-plotter
+display_name: FLIM phasor plotter
+contributions:
+  commands:
+    - id: napari-flim-phasor-plotter.get_reader
+      python_name: napari_flim_phasor_plotter._reader:napari_get_reader
+      title: Open data with FLIM phasor plotter
+    - id: napari-flim-phasor-plotter.make_sample_data
+      python_name: napari_flim_phasor_plotter._sample_data:make_sample_data
+      title: Load sample data from FLIM phasor plotter
+    - id: napari-flim-phasor-plotter.build_phasor_plot
+      python_name: napari_flim_phasor_plotter._widget:make_flim_phasor_plot
+      title: Make FLIM Phasor Plot
+    - id: napari-flim-phasor-plotter.convert_to_zarr
+      python_name: napari_flim_phasor_plotter._io.convert_to_zarr:convert_folder_to_zarr
+      title: Convert to zarr
+  readers:
+    - command: napari-flim-phasor-plotter.get_reader
+      accepts_directories: true
+      filename_patterns: ['*.ptu', '*.PTU', '*.sdt', '*.SDT', '*.tif', '*.zarr']
+  sample_data:
+    - command: napari-flim-phasor-plotter.make_sample_data
+      display_name: FLIM phasor plotter
+      key: unique_id.1
+  widgets:
+    - command: napari-flim-phasor-plotter.build_phasor_plot
+      display_name: Make FLIM Phasor Plot
+    - command: napari-flim-phasor-plotter.convert_to_zarr
+      display_name: Convert to zarr
