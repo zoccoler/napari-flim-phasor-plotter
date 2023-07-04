@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING
 from magicgui import magic_factory
+from napari_flim_phasor_plotter.filters import apply_binning
 
 if TYPE_CHECKING:
     import napari
@@ -153,3 +154,6 @@ def make_flim_phasor_plot(image_layer: "napari.layers.Image",
         laser_frequency_spinbox.setValue(laser_frequency)
 
     return
+
+
+apply_binning_widget = magic_factory(apply_binning)
