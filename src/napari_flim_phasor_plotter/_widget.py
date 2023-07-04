@@ -156,4 +156,35 @@ def make_flim_phasor_plot(image_layer: "napari.layers.Image",
     return
 
 
-apply_binning_widget = apply_binning()
+@magic_factory
+def apply_binning_widget(image_layer: "napari.types.ImageData",
+                         bin_size: int = 2,
+                         binning_3D: bool = True,
+                         ) -> "napari.types.ImageData":
+    """Apply binning to image layer.
+
+    Parameters
+    ----------
+    image_layer : napari.layers.Image
+        napari image layer with FLIM data with dimensions (ut, time, z, y, x).
+        microtime must be the first dimention. time and z are optional.
+    bin_size : int, optional
+        bin kernel size, by default 2
+    binning_3D : bool, optional
+        if True, bin in 3D, otherwise bin each slice in 2D, by default True
+
+    Returns
+    -------
+    image_binned : napari.types.ImageData
+        binned image
+    """
+    import numpy as np
+    from napari_flim_phasor_plotter.filters import apply_binning
+    # Warning! This loads the image as a numpy array
+    # TODO: add support for dask arrays
+    image = np.asarray(image_layer.data)
+    image_binned = apply_binning(image, bin_size, binning_3D)
+    # Add dimensions if needed, to make it 5D (ut, time, z, y, x)
+    while len(image_binned.shape) < 5:
+        image_binned = np.expand_dims(image_binned, axis=0)
+    return image_binned
