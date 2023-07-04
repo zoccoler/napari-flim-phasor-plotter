@@ -156,4 +156,4 @@ def make_flim_phasor_plot(image_layer: "napari.layers.Image",
     return
 
 
-apply_binning_widget = magic_factory(apply_binning)
+apply_binning_widget = apply_binning()

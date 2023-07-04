@@ -1,3 +1,4 @@
+from magicgui import magic_factory
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -74,6 +75,7 @@ def apply_median_filter(image, n=1):
                 image_filt[ut, t] = median(image_filt[ut, t], footprint)
     return image_filt
 
+@magic_factory
 def apply_binning(flim_image: "napari.types.ImageData", 
                        bin_size: int = 2, 
                        binning_3D: bool = True) -> "napari.types.ImageData":
