@@ -21,6 +21,8 @@ Call the plugin from the menu `Plugins > FLIM phasor plotter > Make FLIM Phasor 
 
 Change the color-code of the phasor plot to a density plot of various ‘Colormaps’ from the pulldown `Expand for advanced options` and select `HISTOGRAM`. Manually encircle a region of interest in the phasor plot to highlight the corresponding pixels in the newly created image layer. Hold ‘Shift’ to select and visualize several clusters to investigate image regions of similar FLIM patterns. 
 
+### Input Data
+
 This plugin integrates with [napari-clusters-plotter plugin](https://github.com/BiAPoL/napari-clusters-plotter).
 
 This plugin can read the following FLIM file types:
@@ -34,6 +36,34 @@ This plugin works with the following data shapes:
   - 3D FLIM images (actually 4D data where FLIM counts are in the first axis).
   - 3D timelapse FLIM images (actually 5D data where FLIM counts are in the first axis).
   - Multichannel '.tif' or '.zarr' data may need to be loaded separately.
+
+The plugin outputs data axes in the following order (data from multiple detectors are displayed as distinct napari layers):
+
+(`flim_counts`, `time`, `z`, `y`, `x`)
+
+It also outputs the standard intensity image in another layer by summing the `flim_counts` dimension.
+
+### Data Conversion
+
+If a collection of raw (uncompressed) images are larger than 2GB, we recommend converting them to `.zarr`. This can be done via `Plugins > napari-flim-phasor-plotter > Convert to zarr`.
+
+![](https://github.com/zoccoler/napari-flim-phasor-plotter/raw/main/images/convert_to_zarr.png)
+
+If you have multiple slices or time-points as separated files, you can choose a folder containing the files. In order for the plugin to properly build a stack, the file names must contain some indication about which slice or time-point they represent, i.e., **each file name should contain a `_t` and/or `_z` followerd by a number**.
+
+Here are a few example templates:
+- timelapse:
+  - `image_t001.ptu`
+  - `image_t002.ptu`
+- z-stack:
+  - `image_z01.sdt`
+  - `image_z02.sdt`
+- 3D timelapse:
+  - `image_t001_z001.tif`
+  - `image_t001_z002.tif`
+  - ...
+  - `image_t002_z001.tif`
+
 
 ## Installation
 
