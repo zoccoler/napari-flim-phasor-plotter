@@ -34,7 +34,7 @@ def load_seminal_receptacle_image():
     import numpy as np
     from napari_flim_phasor_plotter._reader import read_single_sdt_file
 
-    file_path = Path(r"./src/napari_flim_phasor_plotter/data/seminal_receptacle_single_image.sdt")
+    file_path = Path(r"./src/napari_flim_phasor_plotter/data/seminal_receptacle_FLIM_single_image.sdt")
     image, metadata = read_single_sdt_file(file_path)
     image = np.expand_dims(image, axis=(2, 3))  # (ch, ut, t, z, y, x)
     return [(image, {'name': 'seminal receptacle raw FLIM image',
