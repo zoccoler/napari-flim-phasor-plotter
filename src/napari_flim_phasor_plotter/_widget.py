@@ -132,6 +132,9 @@ def make_flim_phasor_plot(image_layer: "napari.layers.Image",
     # Set G and S as features to plot (update_axes_list method clears Comboboxes)
     plotter_widget.plot_x_axis.setCurrentIndex(1)
     plotter_widget.plot_y_axis.setCurrentIndex(2)
+    plotter_widget.plotting_type.setCurrentIndex(1)
+    plotter_widget.log_scale.setChecked(True)
+
     # Show parent (PlotterWidget) so that run function can run properly
     plotter_widget.parent().show()
     # Disconnect selector to reset collection of points in plotter
@@ -140,6 +143,16 @@ def make_flim_phasor_plot(image_layer: "napari.layers.Image",
     plotter_widget.run(labels_layer.features,
                        plotter_widget.plot_x_axis.currentText(),
                        plotter_widget.plot_y_axis.currentText())
+
+    # Redefine axes limits
+    current_ylim = plotter_widget.graphics_widget.axes.get_ylim()
+    current_xlim = plotter_widget.graphics_widget.axes.get_xlim()
+    ylim_0 = np.amin([current_ylim[0], -0.1])
+    ylim_1 = np.amax([current_ylim[1], 0.7])
+    xlim_0 = np.amin([current_xlim[0], -0.1])
+    xlim_1 = np.amax([current_xlim[1], 1.1])
+    plotter_widget.graphics_widget.axes.set_ylim([ylim_0, ylim_1])
+    plotter_widget.graphics_widget.axes.set_xlim([xlim_0, xlim_1])
 
     # Update laser frequency spinbox
     # TO DO: access and update widget in a better way
