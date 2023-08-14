@@ -30,7 +30,7 @@ def napari_get_reader(path):
     return None
 
 
-def read_single_ptu_file(path):
+def read_single_ptu_file(path, *args, **kwargs):
     """Read a single ptu file."""
     from napari_flim_phasor_plotter._io.readPTU_FLIM import PTUreader
 
@@ -48,7 +48,7 @@ def read_single_ptu_file(path):
     return data, metadata_per_channel
 
 
-def read_single_sdt_file(path):
+def read_single_sdt_file(path, *args, **kwargs):
     """Read a single sdt file."""
     import sdtfile
     sdt_file = sdtfile.SdtFile(path)  # header to be implemented
@@ -64,12 +64,79 @@ def read_single_sdt_file(path):
     return data, metadata_per_channel
 
 
-def read_single_tif_file(path, channel_axis=0, ut_axis=1):
-    """Read a single tif file."""
+def read_single_tif_file(path, channel_axis=0, ut_axis=1, timelapse=False, viewer_exists=False):
+    """
+    Read a single tif file.
+
+    - If a 2D single channel FLIM data, assumes dimensions (ut, y, x).
+    - If a 3D single channel FLIM data, assumes dimensions (ut, z, y, x).
+    - If a timelapse 2D single channel FLIM data, assumes dimensions (ut, t, y, x).
+    - If a timelapse 3D single channel FLIM data, assumes dimensions (ut, t, z, y, x).
+    - If channel_axis is not None, assumes array is multichannel.
+
+    Parameters
+    ----------
+    path : str
+        Path to file.
+    channel_axis : int, optional
+        Channel axis. The default is 0. If None, assumes array is single channel.
+    ut_axis : int, optional
+        Microtime axis. The default is 1.
+    timelapse : bool, optional
+        If True, assume there must be a time dimension. The default is False.
+    viewer_exists : bool, optional
+        If True, show error message in napari. The default is False.
+
+    Returns
+    -------
+    data, metadata_per_channel : Tuple(array, List(dict))
+        Array containing the FLIM images and a metadata list (one metadata per channel).
+        Array is either 4D (ch, ut, y, x) or 6D (ch, ut, t, z, y, x).
+    """
     from skimage.io import imread
+    from napari.utils. notifications import show_error, show_warning
     data = imread(path)
-    # if not there already, move ch and ut from their given positions to 0 and 1 axes
-    data = np.moveaxis(data, [channel_axis, ut_axis], [0, 1])
+    # Handle different input data dimensions
+    if data.ndim == 2:
+        if viewer_exists:
+            show_error(
+                f"Image is not raw FLIM data. Image dimensions should be >= 3, but current dimensions: {data.ndim}")
+            return None, None
+        raise TypeError(
+            f"Image is not raw FLIM data. Image dimensions should be >= 3, but current dimensions: {data.ndim}")
+
+    if channel_axis is None:
+        # Handle different input data dimensions
+        if data.ndim == 4 and timelapse:  # Assume (ut, t, y, x)
+            # Yields: (ut, t, z, y, x)
+            data = np.expand_dims(data, axis=-3)
+        elif data.ndim == 4:  # Assume (ut, z, y, x)
+            # Yields: (ut, t, z, y, x)
+            data = np.expand_dims(data, axis=-4)
+        # Add unidimensional channel axis
+        data = np.expand_dims(data, 0)
+    # if multichannel
+    else:
+        # Move channel axis to first position and split channels
+        data = np.moveaxis(data, channel_axis, 0)
+        split_arrays = np.split(data, data.shape[0], axis=0)
+        split_arrays_with_new_axis = []
+        for split_array in split_arrays:
+            single_channel_data = split_array[0]
+            if np.any(single_channel_data):  # Do not add empty channels
+                # Handle different input data dimensions
+                if single_channel_data.ndim == 4 and timelapse:  # Assume (ut, t, y, x)
+                    # Yields: (ut, t, z, y, x)
+                    single_channel_data = np.expand_dims(single_channel_data, axis=-3)
+                elif single_channel_data.ndim == 4:  # Assume (ut, z, y, x)
+                    # Yields: (ut, t, z, y, x)
+                    single_channel_data = np.expand_dims(single_channel_data, axis=-4)
+                split_arrays_with_new_axis.append(single_channel_data)
+        # Rebuild data with fixed dimensions and channel axis as first axis
+        data = np.stack(split_arrays_with_new_axis, axis=0)
+
+    # move ut from its given position to axis 1, to yield either (ch, ut, y, x) or (ch, ut, t, z, y, x)
+    data = np.moveaxis(data, source=ut_axis, destination=1)
     # TO DO: allow external reading of metadata
     metadata_per_channel = []
     metadata = {}
@@ -156,6 +223,8 @@ def flim_file_reader(path):
         in napari along with other FLIM metadata, and layer_type is 'image'.
     """
     from pathlib import Path
+    from tifffile import TiffFile
+    import numpy as np
     # handle both a string and a list of strings
     paths = [path] if isinstance(path, str) else path
     # Use Path from pathlib
@@ -171,11 +240,26 @@ def flim_file_reader(path):
         else:
             file_path = path
             file_extension = file_path.suffix
+            channel_axis = 0
+            # If .tif, check shape before loading pixels
+            if file_extension == '.tif' or file_extension == '.tiff':
+                tif = TiffFile(file_path)
+                shape = tif.shaped_metadata[0]['shape']
+                if len(shape) > 4:  # stack (z or timelapse)
+                    channel_axis = None
             imread = get_read_function_from_extension[file_extension]
-            data, metadata_list = imread(file_path)  # (ch, ut, y, x)
-            data = np.expand_dims(data, axis=(2, 3))  # (ch, ut, t, z, y, x)
+            # (ch, ut, y, x) or (ch, ut, t, z, y, x) in case of single tif stack
+            data, metadata_list = imread(file_path, channel_axis=channel_axis, viewer_exists=True)
+            if data.ndim == 4:  # expand dims if not a stack already
+                data = np.expand_dims(data, axis=(2, 3))  # (ch, ut, t, z, y, x)
         if data is None:
-            return [(np.zeros((1, 1, 1, 1, 1, 1)), {'name': 'too big: convert to zarr first'}, 'image')]
+            return [(np.zeros((1, 1, 1, 1, 1, 1)), {
+                     'name': 'too big or not FLIM data: convert to zarr first'}, 'image')]
+        # Exclude empty channels
+        non_empty_channel_indices = [i for i in range(data.shape[0]) if np.any(data[i])]
+        data = data[non_empty_channel_indices]
+        metadata_list = [metadata_list[i] for i in non_empty_channel_indices if len(metadata_list) > 0]
+
         summed_intensity_image = np.sum(data, axis=1, keepdims=True)
         # arguments for TCSPC stack
         add_kwargs = {'channel_axis': 0, 'metadata': metadata_list}
@@ -183,7 +267,8 @@ def flim_file_reader(path):
         layer_data.append((data, add_kwargs, layer_type))
         # arguments for intensity image
         add_kwargs = {'channel_axis': 0, 'metadata': metadata_list,
-                      'name': 'summed_intensity_image_' + Path(path).stem}
+                      'name': 'summed_intensity_image_' + Path(path).stem,
+                      'blending': 'additive'}
         layer_data.append((summed_intensity_image, add_kwargs, layer_type))
     return layer_data
 
