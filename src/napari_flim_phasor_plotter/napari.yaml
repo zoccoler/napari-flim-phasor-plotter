@@ -8,6 +8,9 @@ contributions:
     - id: napari-flim-phasor-plotter.make_sample_data
       python_name: napari_flim_phasor_plotter._sample_data:make_sample_data
       title: Load sample data from FLIM phasor plotter
+    - id: napari-flim-phasor-plotter.load_seminal_receptacle_image
+      python_name: napari_flim_phasor_plotter._sample_data:load_seminal_receptacle_image
+      title: Load sample data from FLIM phasor plotter
     - id: napari-flim-phasor-plotter.build_phasor_plot
       python_name: napari_flim_phasor_plotter._widget:make_flim_phasor_plot
       title: Make FLIM Phasor Plot
@@ -25,6 +28,9 @@ contributions:
     - command: napari-flim-phasor-plotter.make_sample_data
       display_name: FLIM phasor plotter
       key: unique_id.1
+    - command: napari-flim-phasor-plotter.load_seminal_receptacle_image
+      display_name: Seminal Receptacle (2D Raw FLIM)
+      key: receptacle
   widgets:
     - command: napari-flim-phasor-plotter.build_phasor_plot
       display_name: Make FLIM Phasor Plot
