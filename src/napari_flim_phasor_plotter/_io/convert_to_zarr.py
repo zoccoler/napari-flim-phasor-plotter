@@ -34,6 +34,7 @@ name. The z slice and time point must be separated by an underscore.
     """
     import zarr
     import dask.array as da
+    import numpy as np
     from pathlib import Path
     from natsort import natsorted
     from napari_flim_phasor_plotter._reader import get_read_function_from_extension, get_most_frequent_file_extension
@@ -60,6 +61,9 @@ name. The z slice and time point must be separated by an underscore.
     # Get maximum shape and dtype from file names (file names must be in the format: "name_t000_z000")
     image_slice_shape, image_dtype = get_max_slice_shape_and_dtype(
         file_paths, file_extension)
+    # If single channel, add a new axis
+    if len(image_slice_shape) == 3:
+        image_slice_shape = (1, *image_slice_shape)
     # Get maximum time and z from file names
     max_z = get_max_zslices(file_paths, file_extension)
     max_time_point = get_max_time_points(file_paths, file_extension)
@@ -88,7 +92,12 @@ name. The z slice and time point must be separated by an underscore.
     for z_paths, i in zip(tqdm(list_of_time_point_paths, label='time_points'), range(len(list_of_time_point_paths))):
         for path, j in zip(tqdm(z_paths, label='z-slices'), range(len(z_paths))):
             data, _ = imread(path)
-            zarr_array[:data.shape[0], :data.shape[1], i,
-                       j, :data.shape[2], :data.shape[3]] = data
+            # If single channel, add a new axis
+            if len(data.shape) == 3:
+                zarr_array[0, :data.shape[0], i,
+                       j, :data.shape[1], :data.shape[2]] = data
+            else:
+                zarr_array[:data.shape[0], :data.shape[1], i,
+                        j, :data.shape[2], :data.shape[3]] = data
 
     print('Done')
