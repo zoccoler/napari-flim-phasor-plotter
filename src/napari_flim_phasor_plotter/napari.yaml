@@ -14,6 +14,9 @@ contributions:
     - id: napari-flim-phasor-plotter.convert_to_zarr
       python_name: napari_flim_phasor_plotter._io.convert_to_zarr:convert_folder_to_zarr
       title: Convert to zarr
+    - id: napari-flim-phasor-plotter.apply_binning
+      python_name: napari_flim_phasor_plotter._widget:apply_binning_widget
+      title: Apply binning to TCSPC FLIM data
   readers:
     - command: napari-flim-phasor-plotter.get_reader
       accepts_directories: true
@@ -27,3 +30,5 @@ contributions:
       display_name: Make FLIM Phasor Plot
     - command: napari-flim-phasor-plotter.convert_to_zarr
       display_name: Convert to zarr
+    - command: napari-flim-phasor-plotter.apply_binning
+      display_name: Apply binning to TCSPC FLIM data
