@@ -62,9 +62,11 @@ def load_hazelnut_image():
                      'metadata': metadata,
                      'contrast_limits': (np.amin(image[image.shape[0] // 2, ...]),
                                          np.amax(image[image.shape[0] // 2, ...])),
+                     'scale': [metadata['ImgHdr_PixResol']] * 2,
                      }),
             (np.amax(image, axis=0), {'name': 'hazelnut intensity image',
                                       'metadata': metadata,
+                                      'scale': [metadata['ImgHdr_PixResol']] * 2,
                                       }),
             ]
 
@@ -91,9 +93,11 @@ def load_hazelnut_z_stack():
                      'metadata': metadata,
                      'contrast_limits': (np.amin(image[image.shape[0] // 2, ...]),
                                          np.amax(image[image.shape[0] // 2, ...])),
+                     'scale': [2] + [metadata['ImgHdr_PixResol']] * 2,
                      }),
             (np.amax(image, axis=0), {'name': 'hazelnut intensity z-stack',
                                       'metadata': metadata,
+                                      'scale': [2] + [metadata['ImgHdr_PixResol']] * 2,
                                       }),
             ]
 
