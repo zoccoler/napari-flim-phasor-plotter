@@ -96,3 +96,25 @@ def load_hazelnut_z_stack():
                                       'metadata': metadata,
                                       }),
             ]
+
+
+def load_lifetime_cat_synthtetic_single_image():
+    import yaml
+    import numpy as np
+    from napari_flim_phasor_plotter._reader import read_single_tif_file
+
+    file_path = DATA_ROOT / "lifetime_cat.tif"
+    image, metadata = read_single_tif_file(file_path, channel_axis=None)
+    image = image[0]  # Use first channel, there is no second channel in this image
+    # Read metadata from associated yaml file
+    with open(DATA_ROOT / "lifetime_cat_metadata.yml", "r") as stream:
+        metadata = yaml.safe_load(stream)
+    return [(image, {'name': 'lifetime cat synthetic image',
+                     'metadata': metadata,
+                     'contrast_limits': (np.amin(image[image.shape[0] // 2, ...]),
+                                         np.amax(image[image.shape[0] // 2, ...])),
+                     }),
+            (np.amax(image, axis=0), {'name': 'lifetime cat synthetic image',
+                                      'metadata': metadata,
+                                      }),
+            ]
