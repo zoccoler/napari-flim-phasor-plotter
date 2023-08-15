@@ -5,9 +5,6 @@ contributions:
     - id: napari-flim-phasor-plotter.get_reader
       python_name: napari_flim_phasor_plotter._reader:napari_get_reader
       title: Open data with FLIM phasor plotter
-    - id: napari-flim-phasor-plotter.make_sample_data
-      python_name: napari_flim_phasor_plotter._sample_data:make_sample_data
-      title: Load sample data from FLIM phasor plotter
     - id: napari-flim-phasor-plotter.load_seminal_receptacle_image
       python_name: napari_flim_phasor_plotter._sample_data:load_seminal_receptacle_image
       title: Load sample data from FLIM phasor plotter
@@ -25,9 +22,6 @@ contributions:
       accepts_directories: true
       filename_patterns: ['*.ptu', '*.PTU', '*.sdt', '*.SDT', '*.tif', '*.zarr']
   sample_data:
-    - command: napari-flim-phasor-plotter.make_sample_data
-      display_name: FLIM phasor plotter
-      key: unique_id.1
     - command: napari-flim-phasor-plotter.load_seminal_receptacle_image
       display_name: Seminal Receptacle (2D Raw FLIM)
       key: receptacle
