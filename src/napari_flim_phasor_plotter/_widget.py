@@ -146,10 +146,10 @@ def make_flim_phasor_plot(image_layer: "napari.layers.Image",
     # Redefine axes limits
     current_ylim = plotter_widget.graphics_widget.axes.get_ylim()
     current_xlim = plotter_widget.graphics_widget.axes.get_xlim()
-    ylim_0 = np.amin([current_ylim[0], -0.1])
-    ylim_1 = np.amax([current_ylim[1], 0.7])
-    xlim_0 = np.amin([current_xlim[0], -0.1])
-    xlim_1 = np.amax([current_xlim[1], 1.1])
+    ylim_0 = np.amin([current_ylim[0] - 0.1 * current_ylim[0], -0.1])
+    ylim_1 = np.amax([current_ylim[1] + 0.1 * current_ylim[1], 0.7])
+    xlim_0 = np.amin([current_xlim[0] - 0.1 * current_xlim[0], -0.1])
+    xlim_1 = np.amax([current_xlim[1] + 0.1 * current_xlim[1], 1.1])
     plotter_widget.graphics_widget.axes.set_ylim([ylim_0, ylim_1])
     plotter_widget.graphics_widget.axes.set_xlim([xlim_0, xlim_1])
 
