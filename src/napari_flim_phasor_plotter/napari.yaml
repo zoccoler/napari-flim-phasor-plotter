@@ -11,6 +11,9 @@ contributions:
     - id: napari-flim-phasor-plotter.load_hazelnut_image
       python_name: napari_flim_phasor_plotter._sample_data:load_hazelnut_image
       title: Load sample data from FLIM phasor plotter
+    - id: napari-flim-phasor-plotter.load_hazelnut_z_stack
+      python_name: napari_flim_phasor_plotter._sample_data:load_hazelnut_z_stack
+      title: Load sample data from FLIM phasor plotter
     - id: napari-flim-phasor-plotter.build_phasor_plot
       python_name: napari_flim_phasor_plotter._widget:make_flim_phasor_plot
       title: Make FLIM Phasor Plot
@@ -31,6 +34,9 @@ contributions:
     - command: napari-flim-phasor-plotter.load_hazelnut_image
       display_name: Hazelnut (2D Raw FLIM)
       key: hazelnut
+    - command: napari-flim-phasor-plotter.load_hazelnut_z_stack
+      display_name: Hazelnut (3D Raw FLIM)
+      key: hazelnut_z_stack
   widgets:
     - command: napari-flim-phasor-plotter.build_phasor_plot
       display_name: Make FLIM Phasor Plot
