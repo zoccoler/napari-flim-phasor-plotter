@@ -59,3 +59,5 @@ def test_binning():
 
     assert np.array_equal(image_binned_2D, output_binned_2D)
     assert np.array_equal(image_binned_3D, output_binned_3D)
+
+# TODO: wirte tests for median filter and phasor calculation
