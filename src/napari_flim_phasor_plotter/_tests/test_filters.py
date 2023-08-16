@@ -60,4 +60,33 @@ def test_binning():
     assert np.array_equal(image_binned_2D, output_binned_2D)
     assert np.array_equal(image_binned_3D, output_binned_3D)
 
-# TODO: wirte tests for median filter and phasor calculation
+
+def test_median_filter():
+    import numpy as np
+    from napari_flim_phasor_plotter.phasor import get_phasor_components
+    from napari_flim_phasor_plotter._synthetic import make_synthetic_flim_data, create_time_array
+    from napari_flim_phasor_plotter.filters import apply_median_filter
+
+    s_median_filt_expected = np.array(
+        [[0.026525, 0.194265],
+         [0.026525, 0.194265]]
+    )
+    g_median_filt_expected = np.array(
+        [[0.990589, 0.886187],
+         [0.990589, 0.886187]]
+    )
+
+    # create synthetic data
+    frequency = 40
+    n_points = 10
+    amplitudes = [1, 1, 2, 2]
+    lifetimes = [0.8, 2, 0.8, 2]
+    time_array = create_time_array(frequency, n_points)
+    flim_data = make_synthetic_flim_data(time_array, amplitudes, lifetimes).reshape(n_points, 2, 2)
+
+    g, s, dc = get_phasor_components(flim_data)
+    g_median_filt = apply_median_filter(g)
+    s_median_filt = apply_median_filter(s)
+
+    assert np.allclose(g_median_filt, g_median_filt_expected, atol=1e-5)
+    assert np.allclose(s_median_filt, s_median_filt_expected, atol=1e-5)
