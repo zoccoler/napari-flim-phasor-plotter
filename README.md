@@ -79,9 +79,13 @@ Activate the environment:
     
 Then install napari and napari-clusturs-plotter (plus git if on Windows):
 
-    conda install -c conda-forge napari napari-clusters-plotter git
-    
-And finally install the plugin development version with:
+    conda install -c conda-forge napari==0.4.17 napari-clusters-plotter git pyqt
+
+Finally install the plugin with:
+
+    pip install napari-flim-phasor-plotter
+ 
+Optionally, install the plugin development version with:
 
     pip install git+https://github.com/zoccoler/napari-flim-phasor-plotter.git
 
