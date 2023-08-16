@@ -64,16 +64,20 @@ def apply_median_filter(image, n=1):
     import numpy as np
     from skimage.filters import median
     from skimage.morphology import cube
-    assert len(image.shape) == 5, "Image must have 5 dimensions, even if unitary (ut, time, z, y, x)"
+    shape = image.shape
+    # Add dimensions if needed, to make it 4D (time, z, y, x)
+    while len(image.shape) < 4:
+        image = np.expand_dims(image, axis=0)
+    image_filt = np.copy(image)
+
     footprint = cube(3)
     # TODO: make this work with dask, may need rechunking and using
     # https://image.dask.org/en/latest/dask_image.ndfilters.html#dask_image.ndfilters.median_filter
-    image_filt = np.copy(image)
     for i in range(n):
-        for ut in range(image.shape[0]):
-            for t in range(image.shape[1]):
-                image_filt[ut, t] = median(image_filt[ut, t], footprint)
-    return image_filt
+        for t in range(image.shape[0]):
+            image_filt[t] = median(image_filt[t], footprint)
+    # return with original shape
+    return image_filt.reshape(shape)
 
 
 def apply_binning(flim_image: "napari.types.ImageData",
