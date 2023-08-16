@@ -104,7 +104,7 @@ def make_flim_phasor_plot(image_layer: "napari.layers.Image",
     # The layer has to be created here so the plotter can be filled properly
     # below. Overwrite layer if it already exists.
     for layer in napari_viewer.layers:
-        if (isinstance(layer, Labels)) & (layer.name == 'Label_' + image_layer.name):
+        if (isinstance(layer, Labels)) & (layer.name == 'Labelled_pixels_from_' + image_layer.name):
             labels_layer = layer
             labels_layer.data = label_image
             labels_layer.features = table
