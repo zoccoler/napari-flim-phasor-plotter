@@ -1,0 +1,35 @@
+IRF_FWHM: 0.2
+IRF_function: gaussian
+IRF_time_shift: 0.6
+dimensions:
+- photon_counts
+- time
+- z
+- y
+- x
+image_shape:
+- 256
+- 1
+- 1
+- 256
+- 256
+label_to_lifetime_mapping:
+  1:
+  - 0.8
+  2:
+  - 0.8
+  - 2
+  3:
+  - 2
+laser_frequency: 40
+laser_frequency_units: MHz
+lifetime_to_amplitude_ratio_in_mixed_region:
+  0.8: 0.6
+  2: 0.4
+lifetimes:
+- 0.8
+- 2
+lifetimes_units: ns
+max_photon_count: 255
+n_bins: 256
+noise_type: poisson

@@ -1,21 +1,124 @@
-"""
-This module is an example of a barebones sample data provider for napari.
-
-It implements the "sample data" specification.
-see: https://napari.org/stable/plugins/guides.html?#sample-data
-
-Replace code below according to your needs.
-"""
 from __future__ import annotations
+from pathlib import Path
 
-import numpy
+DATA_ROOT = Path(__file__).parent / "data"
 
 
-def make_sample_data():
-    """Generates an image"""
-    # Return list of tuples
-    # [(data1, add_image_kwargs1), (data2, add_image_kwargs2)]
-    # Check the documentation for more information about the
-    # add_image_kwargs
-    # https://napari.org/stable/api/napari.Viewer.html#napari.Viewer.add_image
-    return [(numpy.random.rand(512, 512), {})]
+def load_seminal_receptacle_image():
+    """
+    Load a seminal receptacle FLIM single image from a .sdt file.
+
+    This image was published in:
+    Wetzker, Cornelia. (2019).
+    Example sdt raw FLIM images of NAD(P)H autofluorescence in Drosophila melanogaster tissues [Data set].
+    https://doi.org/10.1038/s41598-019-56067-w
+
+    Returns
+    -------
+    list_of_tuples_of_images_and_metadata : List[LayerDataTuple]
+        A list of tuples, each tuple containing an image and its metadata.
+        The first tuple contains the raw FLIM image with dimensions (ut, t, z, y, x) and metadata.
+        The second tuple contains the intensity image with dimensions (t, z, y, x) and metadata.
+        Time and z dimensions are all of length 1.
+    """
+    import numpy as np
+    from napari_flim_phasor_plotter._reader import read_single_sdt_file
+
+    file_path = DATA_ROOT / "seminal_receptacle_FLIM_single_image.sdt"
+    image, metadata = read_single_sdt_file(file_path)
+    image, metadata = image[0], metadata[0]  # Use first channel, there is no second channel in this image
+    image = np.expand_dims(image, axis=(1, 2))  # (ut, t, z, y, x)
+    return [(image, {'name': 'seminal receptacle raw FLIM image',
+                     'metadata': metadata,
+                     'contrast_limits': (np.amin(image[image.shape[0] // 2, ...]),
+                                         np.amax(image[image.shape[0] // 2, ...])),
+                     }),
+            (np.amax(image, axis=0), {'name': 'seminal receptacle intensity image',
+                                      'metadata': metadata,
+                                      }),
+            ]
+
+
+def load_hazelnut_image():
+    """
+    Load a hazelnut FLIM single image from a .ptu file.
+
+    Returns
+    -------
+    list_of_tuples_of_images_and_metadata : List[LayerDataTuple]
+        A list of tuples, each tuple containing an image and its metadata.
+        The first tuple contains the raw FLIM image with dimensions (ut, t, z, y, x) and metadata.
+        The second tuple contains the intensity image with dimensions (t, z, y, x) and metadata.
+        Time and z dimensions are all of length 1.
+    """
+    import numpy as np
+    from napari_flim_phasor_plotter._reader import read_single_ptu_file
+
+    file_path = DATA_ROOT / "hazelnut_FLIM_single_image.ptu"
+    image, metadata = read_single_ptu_file(file_path)
+    image, metadata = image[0], metadata[0]  # Use first channel, second detector is empty
+    image = np.expand_dims(image, axis=(1, 2))  # (ut, t, z, y, x)
+    return [(image, {'name': 'hazelnut raw FLIM image',
+                     'metadata': metadata,
+                     'contrast_limits': (np.amin(image[image.shape[0] // 2, ...]),
+                                         np.amax(image[image.shape[0] // 2, ...])),
+                     'scale': [metadata['ImgHdr_PixResol']] * 2,
+                     }),
+            (np.amax(image, axis=0), {'name': 'hazelnut intensity image',
+                                      'metadata': metadata,
+                                      'scale': [metadata['ImgHdr_PixResol']] * 2,
+                                      }),
+            ]
+
+
+def load_hazelnut_z_stack():
+    """
+    Load a hazelnut FLIM z-stack image from a folder with individual .ptu files as slices from the stack.
+
+    Returns
+    -------
+    list_of_tuples_of_images_and_metadata : List[LayerDataTuple]
+        A list of tuples, each tuple containing an image and its metadata.
+        The first tuple contains the raw FLIM image with dimensions (ut, t, z, y, x) and metadata.
+        The second tuple contains the intensity image with dimensions (t, z, y, x) and metadata.
+        Time dimension has length 1.
+    """
+    import numpy as np
+    from napari_flim_phasor_plotter._reader import read_stack
+
+    folder_path = DATA_ROOT / "hazelnut_FLIM_z_stack"
+    image, metadata = read_stack(folder_path)
+    image, metadata = image[0], metadata[0]  # Use first channel, second detector is empty
+    return [(image, {'name': 'hazelnut raw FLIM z-stack',
+                     'metadata': metadata,
+                     'contrast_limits': (np.amin(image[image.shape[0] // 2, ...]),
+                                         np.amax(image[image.shape[0] // 2, ...])),
+                     'scale': [2] + [metadata['ImgHdr_PixResol']] * 2,
+                     }),
+            (np.amax(image, axis=0), {'name': 'hazelnut intensity z-stack',
+                                      'metadata': metadata,
+                                      'scale': [2] + [metadata['ImgHdr_PixResol']] * 2,
+                                      }),
+            ]
+
+
+def load_lifetime_cat_synthtetic_single_image():
+    import yaml
+    import numpy as np
+    from napari_flim_phasor_plotter._reader import read_single_tif_file
+
+    file_path = DATA_ROOT / "lifetime_cat.tif"
+    image, metadata = read_single_tif_file(file_path, channel_axis=None)
+    image = image[0]  # Use first channel, there is no second channel in this image
+    # Read metadata from associated yaml file
+    with open(DATA_ROOT / "lifetime_cat_metadata.yml", "r") as stream:
+        metadata = yaml.safe_load(stream)
+    return [(image, {'name': 'lifetime cat synthetic image',
+                     'metadata': metadata,
+                     'contrast_limits': (np.amin(image[image.shape[0] // 2, ...]),
+                                         np.amax(image[image.shape[0] // 2, ...])),
+                     }),
+            (np.amax(image, axis=0), {'name': 'lifetime cat synthetic image',
+                                      'metadata': metadata,
+                                      }),
+            ]
