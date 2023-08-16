@@ -75,10 +75,11 @@ def make_flim_phasor_plot(image_layer: "napari.layers.Image",
 
     image = image[time_mask]
 
-    if apply_median:
-        image = apply_median_filter(image, median_n)
-
     g, s, dc = get_phasor_components(image, harmonic=harmonic)
+
+    if apply_median:
+        g = apply_median_filter(g, median_n)
+        s = apply_median_filter(s, median_n)
 
     label_image = np.arange(np.prod(dc.shape)).reshape(dc.shape) + 1
     label_image[~space_mask] = 0
@@ -110,9 +111,10 @@ def make_flim_phasor_plot(image_layer: "napari.layers.Image",
             break
     else:
         labels_layer = napari_viewer.add_labels(label_image,
-                                                name='Label_' + image_layer.name,
+                                                name='Labelled_pixels_from_' + image_layer.name,
                                                 features=table,
-                                                scale=image_layer.scale[1:],)
+                                                scale=image_layer.scale[1:],
+                                                visible=False)
 
     # Check if plotter was alrerady added to dock_widgets
     # TO DO: avoid using private method access to napari_viewer.window._dock_widgets (will be deprecated)
