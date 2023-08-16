@@ -3,4 +3,4 @@ include README.md
 
 recursive-exclude * __pycache__
 recursive-exclude * *.py[co]
-recursive-include src/napari_flim_phasor_plotter/data/*
+include src/napari_flim_phasor_plotter/data/hazelnut_FLIM_single_image.ptu
