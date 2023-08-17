@@ -1,5 +1,6 @@
 from napari_clusters_plotter._plotter import PlotterWidget
 from qtpy.QtCore import QSize
+import numpy as np
 
 
 def add_phasor_circle(ax):
@@ -60,4 +61,13 @@ class PhasorPlotterWidget(PlotterWidget):
                     plot_cluster_name=plot_cluster_name,
                     redraw_cluster_image=redraw_cluster_image,)
         add_phasor_circle(self.graphics_widget.axes)
-        self.graphics_widget.draw()
+        # Redefine axes limits
+        current_ylim = self.graphics_widget.axes.get_ylim()
+        current_xlim = self.graphics_widget.axes.get_xlim()
+        ylim_0 = np.amin([current_ylim[0] - 0.1 * current_ylim[0], -0.1])
+        ylim_1 = np.amax([current_ylim[1] + 0.1 * current_ylim[1], 0.7])
+        xlim_0 = np.amin([current_xlim[0] - 0.1 * current_xlim[0], -0.1])
+        xlim_1 = np.amax([current_xlim[1] + 0.1 * current_xlim[1], 1.1])
+        self.graphics_widget.axes.set_ylim([ylim_0, ylim_1])
+        self.graphics_widget.axes.set_xlim([xlim_0, xlim_1])
+        self.graphics_widget.draw_idle()
