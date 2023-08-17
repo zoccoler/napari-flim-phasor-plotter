@@ -304,14 +304,14 @@ def read_stack(folder_path):
         # Estimate stack sizes
         # TO DO: estimate stack size from shape and dtype instead of file size (to handle compressed files)
         stack_size_in_MB = get_stack_estimated_size(file_paths, file_extension)
-        if stack_size_in_MB < 2e3:  # 2GB
+        if stack_size_in_MB < 4e3:  # 4GB
             # read full stack
             data, metadata_list = make_full_numpy_stack(
                 file_paths, file_extension)
         else:
             notifications.show_error(
-                'Stack is larger than 2GB, please convert to .zarr')
-            print('Stack is larger than 2GB, please convert to .zarr')
+                'Stack is larger than 4GB, please convert to .zarr')
+            print('Stack is larger than 4GB, please convert to .zarr')
             return None, None
     # TO DO: remove print
     print('stack = True\n', 'data type: ', file_extension,
