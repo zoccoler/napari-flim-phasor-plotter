@@ -67,7 +67,10 @@ Here are a few example templates:
 
 ## Installation
 
-You can install `napari-flim-phasor-plotter` via [pip]. Currently, only the development version is available.
+You can install `napari-flim-phasor-plotter` via [pip]. Follow these steps from a terminal.
+
+We recommend using `mamba-forge` whenever possible. Click [here](https://github.com/conda-forge/miniforge#mambaforge) to choose the right download option for your OS.
+**If you use `mamba-forge`, replace the `conda` term whenever you see it below with `mamba`.**
 
 Create a conda environment:
 
@@ -77,11 +80,19 @@ Activate the environment:
 
     conda activate napari-flim-phasor-env
     
-Then install napari and napari-clusturs-plotter (plus git if on Windows):
+Then install `napari` and `napari-clusturs-plotter` (plus git if on Windows):
 
-    conda install -c conda-forge napari napari-clusters-plotter git
-    
-And finally install the plugin development version with:
+    conda install -c conda-forge napari==0.4.17 napari-clusters-plotter git pyqt
+
+_Optional: we **strongly** recommend having the `devbio-napari` plugin bundle also installed for post-processing. This can be done with:_
+
+    conda install -c conda-forge devbio-napari
+
+Finally install `napari-flim-phasor-plotter` plugin with:
+
+    pip install napari-flim-phasor-plotter
+ 
+Optionally, clone this repository and install the latest plugin development version with:
 
     pip install git+https://github.com/zoccoler/napari-flim-phasor-plotter.git
 
