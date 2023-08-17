@@ -120,12 +120,13 @@ def make_flim_phasor_plot(image_layer: "napari.layers.Image",
     # TO DO: avoid using private method access to napari_viewer.window._dock_widgets (will be deprecated)
     dock_widgets_names = [key for key,
                           value in napari_viewer.window._dock_widgets.items()]
-    if 'Plotter Widget' not in dock_widgets_names:
+    print(dock_widgets_names)
+    if 'Phasor Plotter Widget (napari-flim-phasor-plotter)' not in dock_widgets_names:
         plotter_widget = PhasorPlotterWidget(napari_viewer)
         napari_viewer.window.add_dock_widget(
-            plotter_widget, name='Plotter Widget')
+            plotter_widget, name='Phasor Plotter Widget (napari-flim-phasor-plotter)')
     else:
-        widgets = napari_viewer.window._dock_widgets['Plotter Widget']
+        widgets = napari_viewer.window._dock_widgets['Phasor Plotter Widget (napari-flim-phasor-plotter)']
         plotter_widget = widgets.findChild(PhasorPlotterWidget)
 
     # UPDATE to line below once clusters_plotter updates with support to other layers
@@ -158,9 +159,9 @@ def make_flim_phasor_plot(image_layer: "napari.layers.Image",
 
     # Update laser frequency spinbox
     # TO DO: access and update widget in a better way
-    if 'Make FLIM Phasor Plot (napari-flim-phasor-plotter)' in dock_widgets_names:
+    if 'Calculate Phasors (napari-flim-phasor-plotter)' in dock_widgets_names:
         widgets = napari_viewer.window._dock_widgets[
-            'Make FLIM Phasor Plot (napari-flim-phasor-plotter)']
+            'Calculate Phasors (napari-flim-phasor-plotter)']
         laser_frequency_spinbox = widgets.children()[4].children()[
             2].children()[-1]
         # Set precision of spinbox based on number of decimals in laser_frequency

@@ -17,9 +17,12 @@ contributions:
     - id: napari-flim-phasor-plotter.load_lifetime_cat_synthetic
       python_name: napari_flim_phasor_plotter._sample_data:load_lifetime_cat_synthtetic_single_image
       title: Load sample data from FLIM phasor plotter
-    - id: napari-flim-phasor-plotter.build_phasor_plot
+    - id: napari-flim-phasor-plotter.calculate_phasors
       python_name: napari_flim_phasor_plotter._widget:make_flim_phasor_plot
-      title: Make FLIM Phasor Plot
+      title: Calculate Phasors
+    - id: napari-flim-phasor-plotter.open_phasor_plot
+      python_name: napari_flim_phasor_plotter._plotting:PhasorPlotterWidget
+      title: Open FLIM Phasor Plotter
     - id: napari-flim-phasor-plotter.convert_to_zarr
       python_name: napari_flim_phasor_plotter._io.convert_to_zarr:convert_folder_to_zarr
       title: Convert to zarr
@@ -44,9 +47,11 @@ contributions:
       display_name: Lifetime Cat (2D Raw Synthetic FLIM)
       key: lifetime_cat
   widgets:
-    - command: napari-flim-phasor-plotter.build_phasor_plot
-      display_name: Make FLIM Phasor Plot
+    - command: napari-flim-phasor-plotter.calculate_phasors
+      display_name: Calculate Phasors
     - command: napari-flim-phasor-plotter.convert_to_zarr
       display_name: Convert to zarr
     - command: napari-flim-phasor-plotter.apply_binning
       display_name: Apply binning to TCSPC FLIM data
+    - command: napari-flim-phasor-plotter.open_phasor_plot
+      display_name: Phasor Plotter Widget
