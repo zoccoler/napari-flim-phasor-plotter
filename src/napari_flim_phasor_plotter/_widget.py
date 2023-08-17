@@ -129,10 +129,9 @@ def make_flim_phasor_plot(image_layer: "napari.layers.Image",
         widgets = napari_viewer.window._dock_widgets['Phasor Plotter Widget (napari-flim-phasor-plotter)']
         plotter_widget = widgets.findChild(PhasorPlotterWidget)
 
-    # UPDATE to line below once clusters_plotter updates with support to other layers
-    # plotter_widget.layer_select.value = plotter_widget.layer_select.choices[-1]  # Set layer on top (labels)
-    # Set layer on top (labels)
-    plotter_widget.labels_select.value = plotter_widget.labels_select.choices[-1]
+    # Get labels layer with labelled pixels (labels)
+    plotter_widget.labels_select.value = [
+        choice for choice in plotter_widget.labels_select.choices if choice.name.startswith("Labelled_pixels")][0]
     # Set G and S as features to plot (update_axes_list method clears Comboboxes)
     plotter_widget.plot_x_axis.setCurrentIndex(1)
     plotter_widget.plot_y_axis.setCurrentIndex(2)
