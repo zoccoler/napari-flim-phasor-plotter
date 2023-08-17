@@ -7,7 +7,7 @@
 [![codecov](https://codecov.io/gh/zoccoler/napari-flim-phasor-plotter/branch/main/graph/badge.svg)](https://codecov.io/gh/zoccoler/napari-flim-phasor-plotter)
 [![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-flim-phasor-plotter)](https://napari-hub.org/plugins/napari-flim-phasor-plotter)
 
-Napari-flim-phasor-plotter is a [napari](https://napari.org/stable/) plugin to interactively load and show raw fluorescence lifetime imaging microscopy (FLIM) single images and series and generate phasor plots. These are Fourier transforms of the decay data being visualized using the [napari-clusters-plotter](https://github.com/BiAPoL/napari-clusters-plotter) and allow qualitative and quantitative downstream analysis of FLIM images.  
+Napari-flim-phasor-plotter is a [napari](https://napari.org/stable/) plugin to interactively load and show raw fluorescence lifetime imaging microscopy (FLIM) single images and series and generate phasor plots. These are Fourier transforms of the decay data being visualized using the [napari-clusters-plotter](https://github.com/BiAPoL/napari-clusters-plotter) plotter, adapted to suit the FLIM context. This allows qualitative and quantitative downstream analysis of FLIM images.  
 
 ----------------------------------
 
@@ -45,7 +45,9 @@ It also outputs the standard intensity image in another layer by summing the `fl
 
 ### Data Conversion
 
-If a collection of raw (uncompressed) images are larger than 2GB, we recommend converting them to `.zarr`. This can be done via `Plugins > napari-flim-phasor-plotter > Convert to zarr`.
+If a collection of raw (uncompressed) images are larger than 4GB, we recommend converting them to `.zarr`. This can be done via `Plugins > napari-flim-phasor-plotter > Convert to zarr`.
+
+_Warning: In the current version, lazy loading with `.zarr` is available, but processing may still load all data into memory, so keep track of your memory usage._
 
 ![](https://github.com/zoccoler/napari-flim-phasor-plotter/raw/main/images/convert_to_zarr.png)
 
@@ -92,7 +94,7 @@ Finally install `napari-flim-phasor-plotter` plugin with:
 
     pip install napari-flim-phasor-plotter
  
-Optionally, clone this repository and install the latest plugin development version with:
+Alternatively, clone this repository and install the latest plugin development version with:
 
     pip install git+https://github.com/zoccoler/napari-flim-phasor-plotter.git
 
