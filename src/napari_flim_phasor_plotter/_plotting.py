@@ -62,6 +62,7 @@ class PhasorPlotterWidget(PlotterWidget):
                     redraw_cluster_image=redraw_cluster_image,)
         add_phasor_circle(self.graphics_widget.axes)
         # Redefine axes limits
+        self.graphics_widget.axes.autoscale()
         current_ylim = self.graphics_widget.axes.get_ylim()
         current_xlim = self.graphics_widget.axes.get_xlim()
         ylim_0 = np.amin([current_ylim[0] - 0.1 * current_ylim[0], -0.1])
