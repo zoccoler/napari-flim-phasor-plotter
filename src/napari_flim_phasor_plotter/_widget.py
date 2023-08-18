@@ -120,7 +120,6 @@ def make_flim_phasor_plot(image_layer: "napari.layers.Image",
     # TO DO: avoid using private method access to napari_viewer.window._dock_widgets (will be deprecated)
     dock_widgets_names = [key for key,
                           value in napari_viewer.window._dock_widgets.items()]
-    print(dock_widgets_names)
     if 'Phasor Plotter Widget (napari-flim-phasor-plotter)' not in dock_widgets_names:
         plotter_widget = PhasorPlotterWidget(napari_viewer)
         napari_viewer.window.add_dock_widget(
@@ -145,17 +144,7 @@ def make_flim_phasor_plot(image_layer: "napari.layers.Image",
     plotter_widget.run(labels_layer.features,
                        plotter_widget.plot_x_axis.currentText(),
                        plotter_widget.plot_y_axis.currentText())
-
-    # Redefine axes limits
-    plotter_widget.graphics_widget.axes.autoscale()
-    current_ylim = plotter_widget.graphics_widget.axes.get_ylim()
-    current_xlim = plotter_widget.graphics_widget.axes.get_xlim()
-    ylim_0 = np.amin([current_ylim[0] - 0.1 * current_ylim[0], -0.1])
-    ylim_1 = np.amax([current_ylim[1] + 0.1 * current_ylim[1], 0.7])
-    xlim_0 = np.amin([current_xlim[0] - 0.1 * current_xlim[0], -0.1])
-    xlim_1 = np.amax([current_xlim[1] + 0.1 * current_xlim[1], 1.1])
-    plotter_widget.graphics_widget.axes.set_ylim([ylim_0, ylim_1])
-    plotter_widget.graphics_widget.axes.set_xlim([xlim_0, xlim_1])
+    plotter_widget.redefine_axes_limits(ensure_full_semi_circle_displayed=True)
 
     # Update laser frequency spinbox
     # TO DO: access and update widget in a better way
