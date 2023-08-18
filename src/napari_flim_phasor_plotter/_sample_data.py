@@ -84,9 +84,19 @@ def load_hazelnut_z_stack():
         Time dimension has length 1.
     """
     import numpy as np
+    import zipfile
+    from pathlib import Path
     from napari_flim_phasor_plotter._reader import read_stack
 
-    folder_path = DATA_ROOT / "hazelnut_FLIM_z_stack"
+    zip_file_path = Path(DATA_ROOT / "hazelnut_FLIM_z_stack.zip")
+    extracted_folder_path = Path(DATA_ROOT / "unzipped_hazelnut_FLIM_z_stack")
+    # Create the target directory if it doesn't exist
+    extracted_folder_path.mkdir(parents=True, exist_ok=True)
+    # Extract the zip file
+    with zipfile.ZipFile(zip_file_path, 'r') as zip_ref:
+        zip_ref.extractall(extracted_folder_path)
+    folder_path = extracted_folder_path / "hazelnut_FLIM_z_stack"
+
     image, metadata = read_stack(folder_path)
     image, metadata = image[0], metadata[0]  # Use first channel, second detector is empty
     return [(image, {'name': 'hazelnut raw FLIM z-stack',
