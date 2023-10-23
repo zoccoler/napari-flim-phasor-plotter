@@ -158,7 +158,7 @@ def make_flim_phasor_plot(image_layer: "napari.layers.Image",
             str(laser_frequency)[::-1].find('.'))
         laser_frequency_spinbox.setValue(laser_frequency)
 
-    return
+    return plotter_widget, labels_layer
 
 
 @magic_factory
