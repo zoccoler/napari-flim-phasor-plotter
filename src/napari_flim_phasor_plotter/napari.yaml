@@ -29,6 +29,16 @@ contributions:
     - id: napari-flim-phasor-plotter.apply_binning
       python_name: napari_flim_phasor_plotter._widget:apply_binning_widget
       title: Apply binning to TCSPC FLIM data
+    - id: napari-flim-phasor-plotter.Split_N_Largest_Cluster_Labels
+      python_name: napari_flim_phasor_plotter._widget:Split_N_Largest_Cluster_Labels
+      title: Split N Largest Clusters Labels
+    - id: napari-flim-phasor-plotter.manual_label_extract
+      python_name: napari_flim_phasor_plotter._widget:manual_label_extract
+      title: Manual Label Extract
+    - id: napari-flim-phasor-plotter.smooth_cluster_mask
+      python_name: napari_flim_phasor_plotter._widget:smooth_cluster_mask
+      title: Smooth Cluster Mask
+
   readers:
     - command: napari-flim-phasor-plotter.get_reader
       accepts_directories: true
@@ -55,3 +65,11 @@ contributions:
       display_name: Apply binning to TCSPC FLIM data
     - command: napari-flim-phasor-plotter.open_phasor_plot
       display_name: Phasor Plotter Widget
+    - command: napari-flim-phasor-plotter.Split_N_Largest_Cluster_Labels
+      display_name: Split N Largest Clusters Labels
+    - command: napari-flim-phasor-plotter.manual_label_extract
+      display_name: Manual Label Extraction
+      autogenerate: true
+    - command: napari-flim-phasor-plotter.smooth_cluster_mask
+      display_name: Smooth Cluster Mask
+      autogenerate: true
