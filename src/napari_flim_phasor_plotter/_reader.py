@@ -201,7 +201,7 @@ def recarray_to_dict(recarray):
         if isinstance(recarray[name], np.recarray):
             dictionary[name] = recarray_to_dict(recarray[name])
         else:
-            dictionary[name] = recarray[name].item()
+            dictionary[name] = recarray[name].tolist()
     return dictionary
 
 
