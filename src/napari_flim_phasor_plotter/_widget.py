@@ -137,6 +137,7 @@ def make_flim_phasor_plot(image_layer: "napari.layers.Image",
     plotter_widget.plot_x_axis.setCurrentIndex(1)
     plotter_widget.plot_y_axis.setCurrentIndex(2)
     plotter_widget.plotting_type.setCurrentIndex(1)
+    plotter_widget.log_scale.setChecked(True)
 
     # Show parent (PlotterWidget) so that run function can run properly
     plotter_widget.parent().show()
