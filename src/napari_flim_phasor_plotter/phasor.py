@@ -50,7 +50,7 @@ def get_phasor_components(flim_data, harmonic=1):
 
     dc, _ = fft_slice_function(flim_data, 0)
     # change the zeros to the img average
-    dc = np.where(dc != 0, dc, int(np.mean(dc)))
+    dc = np.where(dc.real != 0, dc.real, np.mean(dc.real))
 
     g, s = fft_slice_function(flim_data, harmonic)
     g /= dc
