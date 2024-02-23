@@ -69,7 +69,7 @@ def make_flim_phasor_plot(image_layer: "napari.layers.Image",
             laser_frequency = image_layer.metadata['TTResult_SyncRate'] * 1E-6
         elif image_layer.metadata['file_type'] == 'sdt':
             # in MHz
-            laser_frequency = image_layer.metadata['measure_info']['StopInfo']['max_sync_rate'] * 10 ** -6
+            laser_frequency = image_layer.metadata['measure_info']['StopInfo']['max_sync_rate'][0] * 10 ** -6
 
     time_mask = make_time_mask(image, laser_frequency)
 
@@ -131,6 +131,9 @@ def make_flim_phasor_plot(image_layer: "napari.layers.Image",
         plotter_widget = widgets.findChild(PhasorPlotterWidget)
 
     # Get labels layer with labelled pixels (labels)
+    # Commented code below will work with napari-clusters-plotter 0.7.4 (not released yet) or 0.8.0 depending on the next version number
+    # plotter_widget.layer_select.value = [
+    #     choice for choice in plotter_widget.layer_select.choices if choice.name.startswith("Labelled_pixels")][0]
     plotter_widget.labels_select.value = [
         choice for choice in plotter_widget.labels_select.choices if choice.name.startswith("Labelled_pixels")][0]
     # Set G and S as features to plot (update_axes_list method clears Comboboxes)
