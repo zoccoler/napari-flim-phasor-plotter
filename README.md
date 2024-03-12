@@ -51,7 +51,7 @@ _Warning: In the current version, lazy loading with `.zarr` is available, but pr
 
 ![](https://github.com/zoccoler/napari-flim-phasor-plotter/raw/main/images/convert_to_zarr.png)
 
-If you have multiple slices or time-points as separated files, you can choose a folder containing the files. In order for the plugin to properly build a stack, the file names must contain some indication about which slice or time-point they represent, i.e., **each file name should contain a `_t` and/or `_z` followerd by a number**.
+If you have multiple slices or time-points as separated files, you can choose a folder containing the files. In order for the plugin to properly build a stack, the file names must contain some indication about which slice or time-point they represent, i.e., **each file name should contain a `_t` and/or `_z` followed by a number**.
 
 Here are a few example templates:
 - timelapse:
@@ -69,26 +69,25 @@ Here are a few example templates:
 
 ## Installation
 
-You can install `napari-flim-phasor-plotter` via [pip]. Follow these steps from a terminal.
+We recommend installing `napari-flim-phasor-plotter` with [mamba](https://mamba.readthedocs.io/en/latest/) after having [Miniforge](https://github.com/conda-forge/miniforge?tab=readme-ov-file#miniforge) installed in your computer. Follow these steps from a terminal.
 
-We recommend using `mamba-forge` whenever possible. Click [here](https://github.com/conda-forge/miniforge#mambaforge) to choose the right download option for your OS.
-**If you use `mamba-forge`, replace the `conda` term whenever you see it below with `mamba`.**
+Click [here](https://github.com/conda-forge/miniforge?tab=readme-ov-file#download) to choose the right download option for your OS.
 
 Create a conda environment:
 
-    conda create -n napari-flim-phasor-env python=3.9
+    mamba create -n napari-flim-phasor-env python=3.9
     
 Activate the environment:
 
-    conda activate napari-flim-phasor-env
+    mamba activate napari-flim-phasor-env
     
 Then install `napari` and `napari-clusturs-plotter` (plus git if on Windows):
 
-    conda install -c conda-forge napari==0.4.17 napari-clusters-plotter git pyqt
+    mamba install -c conda-forge napari napari-clusters-plotter git pyqt
 
-_Optional: we **strongly** recommend having the `devbio-napari` plugin bundle also installed for post-processing. This can be done with:_
+_Optional, but we **strongly** recommend having the `devbio-napari` plugin bundle also installed for post-processing. This can be done with:_
 
-    conda install -c conda-forge devbio-napari
+    mamba install -c conda-forge devbio-napari
 
 Finally install `napari-flim-phasor-plotter` plugin with:
 
