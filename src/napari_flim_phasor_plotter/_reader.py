@@ -113,7 +113,7 @@ def read_single_tif_file(path, channel_axis=0, ut_axis=1, timelapse=False, viewe
         elif data.ndim == 4:  # Assume (ut, z, y, x)
             # Yields: (ut, t, z, y, x)
             data = np.expand_dims(data, axis=-4)
-        # Add unidimensional channel axis
+        # Add unidimensional channel axis (WARNING: this already moves the ut axis) TODO: fix this
         data = np.expand_dims(data, 0)
     # if multichannel
     else:
