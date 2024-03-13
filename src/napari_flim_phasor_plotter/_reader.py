@@ -223,8 +223,9 @@ def flim_file_reader(path):
         in napari along with other FLIM metadata, and layer_type is 'image'.
     """
     from pathlib import Path
-    from tifffile import TiffFile
+    import tifffile
     import numpy as np
+    from napari.utils. notifications import show_warning
     # handle both a string and a list of strings
     paths = [path] if isinstance(path, str) else path
     # Use Path from pathlib
@@ -243,9 +244,17 @@ def flim_file_reader(path):
             channel_axis = 0
             # If .tif, check shape before loading pixels
             if file_extension == '.tif' or file_extension == '.tiff':
-                tif = TiffFile(file_path)
-                shape = tif.shaped_metadata[0]['shape']
+                tif = tifffile.TiffFile(file_path)
+                shaped_metadata = tif.shaped_metadata
+                if len(shaped_metadata) > 0:
+                    shape = tif.shaped_metadata[0]['shape']
+                else:
+                    show_warning('Warning: Cannot determine shape from metadata. Loading full stack.')
+                    image = tifffile.imread(file_path)
+                    shape = image.shape
                 if len(shape) > 4:  # stack (z or timelapse)
+                    channel_axis = None
+                if len(shape) < 4:  # single 2D image (ut, y, x)
                     channel_axis = None
             imread = get_read_function_from_extension[file_extension]
             # (ch, ut, y, x) or (ch, ut, t, z, y, x) in case of single tif stack
