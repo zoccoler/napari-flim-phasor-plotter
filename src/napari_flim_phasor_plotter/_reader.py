@@ -269,7 +269,7 @@ def flim_file_reader(path):
         data = data[non_empty_channel_indices]
         metadata_list = [metadata_list[i] for i in non_empty_channel_indices if len(metadata_list) > 0]
 
-        summed_intensity_image = np.sum(data, axis=1, keepdims=True)
+        summed_intensity_image = np.sum(data, axis=1, keepdims=False)
         # arguments for TCSPC stack
         add_kwargs = {'channel_axis': 0, 'metadata': metadata_list}
         layer_type = "image"
