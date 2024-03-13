@@ -51,6 +51,7 @@ def make_flim_phasor_plot(image_layer: "napari.layers.Image",
     napari_viewer : napari.Viewer, optional
         napari viewer instance, by default None
     """
+    import warnings
     import numpy as np
     import dask.array as da
     import pandas as pd
@@ -119,59 +120,65 @@ def make_flim_phasor_plot(image_layer: "napari.layers.Image",
                                                 visible=False)
 
     # Check if plotter was alrerady added to dock_widgets
-    # TO DO: avoid using private method access to napari_viewer.window._dock_widgets (will be deprecated)
-    dock_widgets_names = [key for key,
-                          value in napari_viewer.window._dock_widgets.items()]
-    if 'Phasor Plotter Widget (napari-flim-phasor-plotter)' not in dock_widgets_names:
-        plotter_widget = PhasorPlotterWidget(napari_viewer)
-        napari_viewer.window.add_dock_widget(
-            plotter_widget, name='Phasor Plotter Widget (napari-flim-phasor-plotter)')
-    else:
-        widgets = napari_viewer.window._dock_widgets['Phasor Plotter Widget (napari-flim-phasor-plotter)']
-        plotter_widget = widgets.findChild(PhasorPlotterWidget)
+    # TODO: avoid using private method access to napari_viewer.window._dock_widgets (will be deprecated)
+    with warnings.catch_warnings():
+        warnings.simplefilter(action='ignore', category=FutureWarning)
+        dock_widgets_names = [key for key,
+                            value in napari_viewer.window._dock_widgets.items()]
+        if 'Phasor Plotter Widget (napari-flim-phasor-plotter)' not in dock_widgets_names:
+            plotter_widget = PhasorPlotterWidget(napari_viewer)
+            napari_viewer.window.add_dock_widget(
+                plotter_widget, name='Phasor Plotter Widget (napari-flim-phasor-plotter)')
+        else:
+            widgets = napari_viewer.window._dock_widgets['Phasor Plotter Widget (napari-flim-phasor-plotter)']
+            plotter_widget = widgets.findChild(PhasorPlotterWidget)
 
-    # Get labels layer with labelled pixels (labels)
-    # Commented code below will work with napari-clusters-plotter 0.7.4 (not released yet) or 0.8.0 depending on the next version number
-    # plotter_widget.layer_select.value = [
-    #     choice for choice in plotter_widget.layer_select.choices if choice.name.startswith("Labelled_pixels")][0]
-    plotter_widget.labels_select.value = [
-        choice for choice in plotter_widget.labels_select.choices if choice.name.startswith("Labelled_pixels")][0]
-    # Set G and S as features to plot (update_axes_list method clears Comboboxes)
-    plotter_widget.plot_x_axis.setCurrentIndex(1)
-    plotter_widget.plot_y_axis.setCurrentIndex(2)
-    plotter_widget.plotting_type.setCurrentIndex(1)
-    plotter_widget.log_scale.setChecked(True)
+        # Get labels layer with labelled pixels (labels)
+        # Commented code below will work with napari-clusters-plotter 0.7.4 (not released yet) or 0.8.0 depending on the next version number
+        # plotter_widget.layer_select.value = [
+        #     choice for choice in plotter_widget.layer_select.choices if choice.name.startswith("Labelled_pixels")][0]
+        for choice in plotter_widget.labels_select.choices:
+            if choice.name == 'Labelled_pixels_from_' + image_layer.name:
+                plotter_widget.labels_select.value = choice
+                break
+        # plotter_widget.labels_select.value = [
+        #     choice for choice in plotter_widget.labels_select.choices if choice.name.startswith("Labelled_pixels")][0]
+        # Set G and S as features to plot (update_axes_list method clears Comboboxes)
+        plotter_widget.plot_x_axis.setCurrentIndex(1)
+        plotter_widget.plot_y_axis.setCurrentIndex(2)
+        plotter_widget.plotting_type.setCurrentIndex(1)
+        plotter_widget.log_scale.setChecked(True)
 
-    # Show parent (PlotterWidget) so that run function can run properly
-    plotter_widget.parent().show()
-    # Disconnect selector to reset collection of points in plotter
-    # (it gets reconnected when 'run' method is run)
-    plotter_widget.graphics_widget.selector.disconnect()
-    plotter_widget.run(labels_layer.features,
-                       plotter_widget.plot_x_axis.currentText(),
-                       plotter_widget.plot_y_axis.currentText())
-    plotter_widget.redefine_axes_limits(ensure_full_semi_circle_displayed=True)
+        # Show parent (PlotterWidget) so that run function can run properly
+        plotter_widget.parent().show()
+        # Disconnect selector to reset collection of points in plotter
+        # (it gets reconnected when 'run' method is run)
+        plotter_widget.graphics_widget.selector.disconnect()
+        plotter_widget.run(labels_layer.features,
+                        plotter_widget.plot_x_axis.currentText(),
+                        plotter_widget.plot_y_axis.currentText())
+        plotter_widget.redefine_axes_limits(ensure_full_semi_circle_displayed=True)
 
-    # Update laser frequency spinbox
-    # TO DO: access and update widget in a better way
-    if 'Calculate Phasors (napari-flim-phasor-plotter)' in dock_widgets_names:
-        widgets = napari_viewer.window._dock_widgets[
-            'Calculate Phasors (napari-flim-phasor-plotter)']
-        laser_frequency_spinbox = widgets.children()[4].children()[
-            2].children()[-1]
-        # Set precision of spinbox based on number of decimals in laser_frequency
-        laser_frequency_spinbox.setDecimals(
-            str(laser_frequency)[::-1].find('.'))
-        laser_frequency_spinbox.setValue(laser_frequency)
+        # Update laser frequency spinbox
+        # TO DO: access and update widget in a better way
+        if 'Calculate Phasors (napari-flim-phasor-plotter)' in dock_widgets_names:
+            widgets = napari_viewer.window._dock_widgets[
+                'Calculate Phasors (napari-flim-phasor-plotter)']
+            laser_frequency_spinbox = widgets.children()[4].children()[
+                2].children()[-1]
+            # Set precision of spinbox based on number of decimals in laser_frequency
+            laser_frequency_spinbox.setDecimals(
+                str(laser_frequency)[::-1].find('.'))
+            laser_frequency_spinbox.setValue(laser_frequency)
 
     return plotter_widget, labels_layer
 
 
 @magic_factory
-def apply_binning_widget(image_layer: "napari.types.ImageData",
+def apply_binning_widget(image_layer: "napari.layers.Image",
                          bin_size: int = 2,
                          binning_3D: bool = True,
-                         ) -> "napari.types.ImageData":
+                         ) -> "napari.layers.Image":
     """Apply binning to image layer.
 
     Parameters
@@ -186,10 +193,11 @@ def apply_binning_widget(image_layer: "napari.types.ImageData",
 
     Returns
     -------
-    image_binned : napari.types.ImageData
-        binned image
+    image_layer_binned : napari.layers.Image
+        binned layer
     """
     import numpy as np
+    from napari.layers import Image
     from napari_flim_phasor_plotter.filters import apply_binning
     # Warning! This loads the image as a numpy array
     # TODO: add support for dask arrays
@@ -198,7 +206,7 @@ def apply_binning_widget(image_layer: "napari.types.ImageData",
     # Add dimensions if needed, to make it 5D (ut, time, z, y, x)
     while len(image_binned.shape) < 5:
         image_binned = np.expand_dims(image_binned, axis=0)
-    return image_binned
+    return Image(image_binned, scale=image_layer.scale, name=image_layer.name + f' binned {bin_size}')
 
 def manual_label_extract(cluster_labels_layer: "napari.layers.Labels", label_number: int = 1) -> "napari.layers.Labels":
     """Extracts single label from labels layer
@@ -217,10 +225,14 @@ def manual_label_extract(cluster_labels_layer: "napari.layers.Labels", label_num
     """
     import numpy as np
     from napari.layers import Labels
+    from napari.utils import DirectLabelColormap
+    unitary_dims = [i for i, size in enumerate(np.asarray(cluster_labels_layer.data).shape) if size == 1]
     labels_data = np.squeeze(np.asarray(cluster_labels_layer.data).copy())
     labels_data[labels_data != label_number] = 0
+    # TODO: update to use DirectLabelColormap once napari-clusters-plotter has this issue fixed
     label_color = cluster_labels_layer.color
-    return Labels(labels_data, color=label_color, name=f'Cluster Label #{label_number}')
+    new_scale = np.array([scale for i, scale in enumerate(cluster_labels_layer.scale) if i not in unitary_dims])
+    return Labels(labels_data, colormap=DirectLabelColormap(color_dict=label_color), name=f'Cluster Label #{label_number}', scale=new_scale)
 
 def get_n_largest_cluster_labels(features_table: 'pandas.DataFrame', n: int=1, clustering_id: str='MANUAL_CLUSTER_ID') -> List[int]:
     """Get the labels of the n largest clusters in a features table
@@ -278,9 +290,11 @@ def split_n_largest_cluster_labels(labels_layer: "napari.layers.Labels", cluster
 class Split_N_Largest_Cluster_Labels(Container):
     """Widget to split the n largest clusters from a labels layer
     """    
+    from napari import layers as napari_layers
     input_layer_types = (
-        "napari.layers.Labels",)
+        napari_layers.Labels,)
     def __init__(self, viewer: "napari.viewer.Viewer"):
+        from napari import layers as napari_layers
         self._viewer = viewer
 
         # Create widgets
@@ -313,7 +327,7 @@ class Split_N_Largest_Cluster_Labels(Container):
         # Connect all labels layer data change events to reset clustering id choices
         # to ensure cluster id is up-to-date
         for layer in self._viewer.layers:
-            if isinstance(layer, "napari.layers.Labels"):
+            if isinstance(layer, napari_layers.Labels):
                 layer.events.data.connect(self._clustering_id_combobox.reset_choices)
 
         # Create cut button
@@ -358,14 +372,17 @@ class Split_N_Largest_Cluster_Labels(Container):
         """Run the widget
 
         Creates new labels layers for each of the n largest clusters
-        if entriesd are valid
+        if entries are valid
         """        
-        split_n_largest_cluster_labels(
+        cluster_individual_labels_layer_list = split_n_largest_cluster_labels(
             labels_layer=self._labels_layer_combobox.value,
             clusters_labels_layer=self._clusters_labels_layer_combobox.value,
             clustering_id=self._clustering_id_combobox.value,
             n=self._n_spinbox.value,
         )
+        # Add new layers to viewer
+        for layer in cluster_individual_labels_layer_list:
+            self._viewer.add_layer(layer)
 
 def smooth_cluster_mask(cluster_mask_layer: "napari.layers.Labels", fill_area_px: int = 64, smooth_radius: int = 3) -> "napari.layers.Labels":
     """Smooths a mask from a labels layer with morphological operations
@@ -387,6 +404,8 @@ def smooth_cluster_mask(cluster_mask_layer: "napari.layers.Labels", fill_area_px
     from skimage import morphology
     import numpy as np
     from napari.layers import Labels
+    from napari.utils import DirectLabelColormap
+    unitary_dims = [i for i, size in enumerate(np.asarray(cluster_mask_layer.data).shape) if size == 1]
     labels_data = np.squeeze(np.asarray(cluster_mask_layer.data))
     # Fill holes based on area threshold
     labels_data = morphology.area_closing(labels_data, fill_area_px)
@@ -396,5 +415,7 @@ def smooth_cluster_mask(cluster_mask_layer: "napari.layers.Labels", fill_area_px
     labels_data = morphology.isotropic_opening(labels_data, smooth_radius)
     # Restore label number
     labels_data = labels_data.astype(cluster_mask_layer.data.dtype)*cluster_mask_layer.data.max()
+    # TODO: update to use DirectLabelColormap once napari-clusters-plotter has this issue fixed
     label_color = cluster_mask_layer.color
-    return Labels(labels_data, color=label_color)
+    new_scale = np.array([scale for i, scale in enumerate(cluster_mask_layer.scale) if i not in unitary_dims])
+    return Labels(labels_data, colormap=DirectLabelColormap(color_dict=label_color), scale=new_scale, name=cluster_mask_layer.name + ' smoothed')
