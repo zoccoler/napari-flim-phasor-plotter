@@ -113,7 +113,7 @@ def read_single_tif_file(path, channel_axis=0, ut_axis=1, timelapse=False, viewe
         elif data.ndim == 4:  # Assume (ut, z, y, x)
             # Yields: (ut, t, z, y, x)
             data = np.expand_dims(data, axis=-4)
-        # Add unidimensional channel axis
+        # Add unidimensional channel axis (WARNING: this already moves the ut axis) TODO: fix this
         data = np.expand_dims(data, 0)
     # if multichannel
     else:
@@ -223,8 +223,9 @@ def flim_file_reader(path):
         in napari along with other FLIM metadata, and layer_type is 'image'.
     """
     from pathlib import Path
-    from tifffile import TiffFile
+    import tifffile
     import numpy as np
+    from napari.utils. notifications import show_warning
     # handle both a string and a list of strings
     paths = [path] if isinstance(path, str) else path
     # Use Path from pathlib
@@ -243,9 +244,17 @@ def flim_file_reader(path):
             channel_axis = 0
             # If .tif, check shape before loading pixels
             if file_extension == '.tif' or file_extension == '.tiff':
-                tif = TiffFile(file_path)
-                shape = tif.shaped_metadata[0]['shape']
+                tif = tifffile.TiffFile(file_path)
+                shaped_metadata = tif.shaped_metadata
+                if len(shaped_metadata) > 0:
+                    shape = tif.shaped_metadata[0]['shape']
+                else:
+                    show_warning('Warning: Cannot determine shape from metadata. Loading full stack.')
+                    image = tifffile.imread(file_path)
+                    shape = image.shape
                 if len(shape) > 4:  # stack (z or timelapse)
+                    channel_axis = None
+                if len(shape) < 4:  # single 2D image (ut, y, x)
                     channel_axis = None
             imread = get_read_function_from_extension[file_extension]
             # (ch, ut, y, x) or (ch, ut, t, z, y, x) in case of single tif stack
@@ -260,7 +269,7 @@ def flim_file_reader(path):
         data = data[non_empty_channel_indices]
         metadata_list = [metadata_list[i] for i in non_empty_channel_indices if len(metadata_list) > 0]
 
-        summed_intensity_image = np.sum(data, axis=1, keepdims=True)
+        summed_intensity_image = np.sum(data, axis=1, keepdims=False)
         # arguments for TCSPC stack
         add_kwargs = {'channel_axis': 0, 'metadata': metadata_list}
         layer_type = "image"
