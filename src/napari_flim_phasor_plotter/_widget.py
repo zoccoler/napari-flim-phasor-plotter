@@ -134,15 +134,10 @@ def make_flim_phasor_plot(image_layer: "napari.layers.Image",
             plotter_widget = widgets.findChild(PhasorPlotterWidget)
 
         # Get labels layer with labelled pixels (labels)
-        # Commented code below will work with napari-clusters-plotter 0.7.4 (not released yet) or 0.8.0 depending on the next version number
-        # plotter_widget.layer_select.value = [
-        #     choice for choice in plotter_widget.layer_select.choices if choice.name.startswith("Labelled_pixels")][0]
-        for choice in plotter_widget.labels_select.choices:
+        for choice in plotter_widget.layer_select.choices:
             if choice.name == 'Labelled_pixels_from_' + image_layer.name:
-                plotter_widget.labels_select.value = choice
+                plotter_widget.layer_select.value = choice
                 break
-        # plotter_widget.labels_select.value = [
-        #     choice for choice in plotter_widget.labels_select.choices if choice.name.startswith("Labelled_pixels")][0]
         # Set G and S as features to plot (update_axes_list method clears Comboboxes)
         plotter_widget.plot_x_axis.setCurrentIndex(1)
         plotter_widget.plot_y_axis.setCurrentIndex(2)
