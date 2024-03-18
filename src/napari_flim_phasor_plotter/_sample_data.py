@@ -85,17 +85,28 @@ def load_hazelnut_z_stack():
     """
     import numpy as np
     import zipfile
+    import requests
+    import shutil
     from pathlib import Path
     from napari_flim_phasor_plotter._reader import read_stack
 
+    zip_url = 'https://github.com/zoccoler/hazelnut_FLIM_z_stack_data/raw/main/hazelnut_FLIM_z_stack.zip'
     zip_file_path = Path(DATA_ROOT / "hazelnut_FLIM_z_stack.zip")
+    # Download the zip file
+    r = requests.get(zip_url, allow_redirects=True)
+    with open(zip_file_path, 'wb') as zip_file:
+        zip_file.write(r.content)
     extracted_folder_path = Path(DATA_ROOT / "unzipped_hazelnut_FLIM_z_stack")
-    # Create the target directory if it doesn't exist
+    # Create the target directory
+    if extracted_folder_path.exists():
+        shutil.rmtree(extracted_folder_path)  # Remove the directory if it already exists to prevent errors
     extracted_folder_path.mkdir(parents=True, exist_ok=True)
     # Extract the zip file
     with zipfile.ZipFile(zip_file_path, 'r') as zip_ref:
         zip_ref.extractall(extracted_folder_path)
     folder_path = extracted_folder_path / "hazelnut_FLIM_z_stack"
+    # Delete the zip file after extraction
+    Path(zip_file_path).unlink()
 
     image, metadata = read_stack(folder_path)
     image, metadata = image[0], metadata[0]  # Use first channel, second detector is empty
