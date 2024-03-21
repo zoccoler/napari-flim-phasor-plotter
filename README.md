@@ -83,7 +83,7 @@ Activate the environment:
     
 Then install `napari` and `napari-clusturs-plotter` (plus git if on Windows):
 
-    mamba install -c conda-forge napari napari-clusters-plotter git pyqt
+    mamba install -c conda-forge napari==0.4.17 napari-clusters-plotter git pyqt
 
 _Optional, but we **strongly** recommend having the `devbio-napari` plugin bundle also installed for post-processing. This can be done with:_
 
