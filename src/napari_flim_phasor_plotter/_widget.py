@@ -117,8 +117,7 @@ def make_flim_phasor_plot(image_layer: "napari.layers.Image",
                                                 name='Labelled_pixels_from_' + image_layer.name,
                                                 features=table,
                                                 scale=image_layer.scale[1:],
-                                                visible=True,
-                                                opacity=0.2)
+                                                visible=False)
 
     # Check if plotter was alrerady added to dock_widgets
     # TODO: avoid using private method access to napari_viewer.window._dock_widgets (will be deprecated)
@@ -225,8 +224,10 @@ def manual_label_extract(cluster_labels_layer: "napari.layers.Labels", label_num
     unitary_dims = [i for i, size in enumerate(np.asarray(cluster_labels_layer.data).shape) if size == 1]
     labels_data = np.squeeze(np.asarray(cluster_labels_layer.data).copy())
     labels_data[labels_data != label_number] = 0
+    # TODO: update to use DirectLabelColormap once napari-clusters-plotter has this issue fixed
+    label_color = cluster_labels_layer.color
     new_scale = np.array([scale for i, scale in enumerate(cluster_labels_layer.scale) if i not in unitary_dims])
-    return Labels(labels_data, colormap=cluster_labels_layer.colormap, name=f'Cluster Label #{label_number}', scale=new_scale)
+    return Labels(labels_data, colormap=DirectLabelColormap(color_dict=label_color), name=f'Cluster Label #{label_number}', scale=new_scale)
 
 def get_n_largest_cluster_labels(features_table: 'pandas.DataFrame', n: int=1, clustering_id: str='MANUAL_CLUSTER_ID') -> List[int]:
     """Get the labels of the n largest clusters in a features table
@@ -409,5 +410,7 @@ def smooth_cluster_mask(cluster_mask_layer: "napari.layers.Labels", fill_area_px
     labels_data = morphology.isotropic_opening(labels_data, smooth_radius)
     # Restore label number
     labels_data = labels_data.astype(cluster_mask_layer.data.dtype)*cluster_mask_layer.data.max()
+    # TODO: update to use DirectLabelColormap once napari-clusters-plotter has this issue fixed
+    label_color = cluster_mask_layer.color
     new_scale = np.array([scale for i, scale in enumerate(cluster_mask_layer.scale) if i not in unitary_dims])
-    return Labels(labels_data, colormap=cluster_mask_layer.colormap, scale=new_scale, name=cluster_mask_layer.name + ' smoothed')
+    return Labels(labels_data, colormap=DirectLabelColormap(color_dict=label_color), scale=new_scale, name=cluster_mask_layer.name + ' smoothed')
