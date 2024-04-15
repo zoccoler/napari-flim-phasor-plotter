@@ -117,7 +117,8 @@ def make_flim_phasor_plot(image_layer: "napari.layers.Image",
                                                 name='Labelled_pixels_from_' + image_layer.name,
                                                 features=table,
                                                 scale=image_layer.scale[1:],
-                                                visible=False)
+                                                visible=True,
+                                                opacity=0.2)
 
     # Check if plotter was alrerady added to dock_widgets
     # TODO: avoid using private method access to napari_viewer.window._dock_widgets (will be deprecated)
