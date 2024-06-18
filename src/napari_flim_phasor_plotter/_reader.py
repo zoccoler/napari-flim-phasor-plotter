@@ -31,17 +31,53 @@ def napari_get_reader(path):
 
 
 def read_single_ptu_file(path, *args, **kwargs):
-    """Read a single ptu file."""
-    from napari_flim_phasor_plotter._io.readPTU_FLIM import PTUreader
+    """Read a single ptu file.
 
-    ptu_file = PTUreader(path, print_header_data=False)
-    data, _ = ptu_file.get_flim_data_stack()
-    # from (x, y, ch, ut) to (ch, ut, y, x)
-    data = np.moveaxis(data, [0, 1], [-2, -1])
+    Only accepts single frame PTU files. If PTU file is a time-lapse, split into single frame PTU files first, otherwise just first frame gets read.
+    
+    Parameters
+    ----------
+    path : str
+        Path to the PTU file.
+        
+    Returns
+    -------
+    data : np.ndarray
+        The data array with dimensions (ch, ut, y, x).
+    metadata_per_channel : list
+        List of metadata dictionaries for each channel.
+        """
+    from ptufile import PtuFile
+    import numpy as np
+    from warnings import warn
+
+    ptu = PtuFile(path)
+    ptu_dims = list(ptu.dims)
+    if 'T' in ptu_dims:
+        t_pos = ptu_dims.index('T')
+        n_frames = ptu.shape[t_pos]
+        if n_frames > 1:
+            warn("Timelapse found in single ptu file. This function is for single frame PTU files only. Returning first frame.")
+        # read single frame from axis where time is present
+        data = np.take(ptu[:], 0, axis=t_pos)
+        ptu_dims.pop(t_pos)  
+    else:
+        data = ptu[:]
+    
+    # Re-order dimensions to standard order
+    standard_dims_order = ['C', 'H', 'Y', 'X'] # (ch, ut, y, x)
+    argsorted = [ptu_dims.index(dim) for dim in standard_dims_order]
+    data = np.moveaxis(data, argsorted, range(len(argsorted)))
+
+    # Get metadata
     # metadata per channel/detector
     metadata_per_channel = []
-    metadata = ptu_file.head
+    metadata = ptu.tags
     metadata['file_type'] = 'ptu'
+    metadata['frequency'] = ptu.frequency
+    metadata['tcspc_resolution'] = ptu.tcspc_resolution
+    metadata['x_pixel_size'] = ptu.coords['X'][1]
+    metadata['y_pixel_size'] = ptu.coords['Y'][1]
     # Add same metadata to each channel
     for channel in range(data.shape[0]):
         metadata_per_channel.append(metadata)
@@ -257,7 +293,7 @@ def flim_file_reader(path):
                 if len(shape) < 4:  # single 2D image (ut, y, x)
                     channel_axis = None
             imread = get_read_function_from_extension[file_extension]
-            # (ch, ut, y, x) or (ch, ut, t, z, y, x) in case of single tif stack
+            # (ch, ut, y, x)  or (ch, ut, t, z, y, x) in case of single tif stack
             data, metadata_list = imread(file_path, channel_axis=channel_axis, viewer_exists=True)
             if data.ndim == 4:  # expand dims if not a stack already
                 data = np.expand_dims(data, axis=(2, 3))  # (ch, ut, t, z, y, x)
@@ -322,9 +358,10 @@ def read_stack(folder_path):
                 'Stack is larger than 4GB, please convert to .zarr')
             print('Stack is larger than 4GB, please convert to .zarr')
             return None, None
-    # TO DO: remove print
-    print('stack = True\n', 'data type: ', file_extension,
-          '\ndata_shape = ', data.shape, '\n')
+    print('stack = True',
+          '\ndata type: ', file_extension,
+          '\ndata_shape = ', data.shape,
+          '\n')
 
     return data, metadata_list
 
@@ -347,13 +384,17 @@ def get_max_slice_shape_and_dtype(file_paths, file_extension):
         Max shape and data type.
     """
     # TO DO: offer fast reading option by calculating max shape from metadata (array may become bigger)
+    from tqdm import tqdm
+    progress_bar = tqdm(total=len(file_paths), desc='Calculating stack shape from individual files', unit='files')
     shapes_list = []
     for file_path in file_paths:
         if file_path.suffix == file_extension:
             imread = get_read_function_from_extension[file_extension]
             image_slice, _ = imread(file_path)
             shapes_list.append(image_slice.shape)  # (ch, ut, y, x)
-    # Get slice max shape (ch, mt, y, x)
+            progress_bar.update(1)
+    progress_bar.close()
+    # Get slice max shape (ch, ut, y, x)
     return max(shapes_list), image_slice.dtype
 
 
@@ -372,6 +413,7 @@ def make_full_numpy_stack(file_paths, file_extension):
     numpy_stack, metadata_per_channel : Tuple(numpy array, List(dict))
         A numpy array of shape (ch, ut, t, z, y, x) and a metadata list (one metadata per channel).
     """
+    from tqdm import tqdm
     # Read all images to get max slice shape
     image_slice_shape, image_dtype = get_max_slice_shape_and_dtype(
         file_paths, file_extension)
@@ -379,6 +421,9 @@ def make_full_numpy_stack(file_paths, file_extension):
 
     list_of_time_point_paths = get_structured_list_of_paths(
         file_paths, file_extension)
+    progress_bar = tqdm(total=len(list_of_time_point_paths) * len(list_of_time_point_paths[0]),
+                        desc='Reading stack', unit='slices')
+
     z_list, t_list = [], []
     for list_of_zslice_paths in list_of_time_point_paths:
         for zslice_path in list_of_zslice_paths:
@@ -387,10 +432,12 @@ def make_full_numpy_stack(file_paths, file_extension):
             z_slice[:data.shape[0], :data.shape[1],
                     :data.shape[2], :data.shape[3]] = data
             z_list.append(z_slice)
+            progress_bar.update(1)
         z_stack = np.stack(z_list)
         t_list.append(z_stack)
         z_list = []
     stack = np.stack(t_list)
+    progress_bar.close()
     # from (t, z, ch, ut, y, x) to (ch, ut, t, z, y, x)
     stack = np.moveaxis(stack, [-4, -3], [0, 1])
     return stack, metadata_per_channel
@@ -485,6 +532,8 @@ def get_stack_estimated_size(file_paths, file_extension, from_file_size=False):
     stack_size : float
         Stack size in MB.
     """
+    from tqdm import tqdm
+    progress_bar = tqdm(total=len(file_paths), desc='Calculating decompressed stack size', unit='files')
     stack_size = 0
     for file_path in file_paths:
         if file_path.suffix == file_extension:
@@ -495,6 +544,9 @@ def get_stack_estimated_size(file_paths, file_extension, from_file_size=False):
                 data, metadata_list = imread(file_path)  # (ch, ut, y, x)
                 file_size = data.nbytes / 1e6  # in MB
             stack_size += file_size
+            progress_bar.update(1)
+    progress_bar.close()
+    print(f"Estimated decompressed stack size: {stack_size} MB")
     return stack_size
 
 
