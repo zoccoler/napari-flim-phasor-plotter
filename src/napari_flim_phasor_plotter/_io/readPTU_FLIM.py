@@ -399,7 +399,7 @@ class PTUreader():
 
         if record_type == 'rtPicoHarpT3':
 
-            print('TCSPC Hardware: {}'.format(record_type[2:]))
+            # print('TCSPC Hardware: {}'.format(record_type[2:]))
             #   +----------------------+ T3 32 bit record  +---------------------+
             #   |x|x|x|x|x|x|x|x|x|x|x|x|x|x|x|x|  |x|x|x|x|x|x|x|x|x|x|x|x|x|x|x|x| --> 32 bit record
             #   +-------------------------------+  +-------------------------------+
@@ -427,7 +427,7 @@ class PTUreader():
             
         elif record_type == 'rtPicoHarpT2':
 
-            print('TCSPC Hardware: {}'.format(record_type[2:]))
+            # print('TCSPC Hardware: {}'.format(record_type[2:]))
 
             #   +----------------------+ T2 32 bit record  +---------------------+
             #   |x|x|x|x|x|x|x|x|x|x|x|x|x|x|x|x|  |x|x|x|x|x|x|x|x|x|x|x|x|x|x|x|x| --> 32 bit record
@@ -448,7 +448,7 @@ class PTUreader():
 
         elif record_type in ['rtHydraHarpT3', 'rtHydraHarp2T3', 'rtTimeHarp260NT3', 'rtTimeHarp260PT3','rtMultiHarpNT3']:
 
-            print('TCSPC Hardware: {}'.format(record_type[2:]))
+            # print('TCSPC Hardware: {}'.format(record_type[2:]))
 
             #   +----------------------+ T3 32 bit record  +---------------------+
             #   |x|x|x|x|x|x|x|x|x|x|x|x|x|x|x|x|  |x|x|x|x|x|x|x|x|x|x|x|x|x|x|x|x| --> 32 bit record
@@ -475,7 +475,7 @@ class PTUreader():
 
         elif record_type == 'rtHydraHarpT2':
 
-            print('TCSPC Hardware: {}'.format(record_type[2:]))
+            # print('TCSPC Hardware: {}'.format(record_type[2:]))
 
             #   +----------------------+ T3 32 bit record  +---------------------+
             #   |x|x|x|x|x|x|x|x|x|x|x|x|x|x|x|x|  |x|x|x|x|x|x|x|x|x|x|x|x|x|x|x|x| --> 32 bit record
@@ -499,7 +499,7 @@ class PTUreader():
 
         elif record_type in ['rtHydraHarp2T2', 'rtTimeHarp260NT2', 'rtTimeHarp260PT2','rtMultiHarpNT2']:
 
-            print('TCSPC Hardware: {}'.format(record_type[2:]))
+            # print('TCSPC Hardware: {}'.format(record_type[2:]))
 
             #   +----------------------+ T3 32 bit record  +---------------------+
             #   |x|x|x|x|x|x|x|x|x|x|x|x|x|x|x|x|  |x|x|x|x|x|x|x|x|x|x|x|x|x|x|x|x| --> 32 bit record
@@ -550,7 +550,7 @@ class PTUreader():
         self.special = special.astype(np.uint8, copy=False)
         self.x_size = self.head['ImgHdr_PixX']
         self.y_size = self.head['ImgHdr_PixY']
-        print("Raw Data has been Read!\n")
+        # print("Raw Data has been Read!\n")
 
         return None
     
