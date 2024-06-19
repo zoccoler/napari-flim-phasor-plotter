@@ -30,6 +30,50 @@ def napari_get_reader(path):
     return None
 
 
+def read_single_ptu_file_2d_timelapse(path, *args, **kwargs):
+    """Read a 2D timelapse PTU file.
+    
+    Parameters
+    ----------
+    path : str
+        Path to the PTU file.
+        
+    Returns
+    -------
+    data : np.ndarray
+        The data array with dimensions (ch, ut, t, z, y, x), where z has length 1 (following napari convention).
+    metadata_per_channel : list
+        List of metadata dictionaries for each channel.
+    """
+    from ptufile import PtuFile
+    import numpy as np
+
+    ptu = PtuFile(path)
+    ptu_dims = list(ptu.dims)
+    data = ptu[:]
+
+    # Re-order dimensions to standard order
+    standard_dims_order = ['C', 'H', 'T', 'Y', 'X'] # (ch, ut, t, y, x)
+    argsorted = [ptu_dims.index(dim) for dim in standard_dims_order]
+    data = np.moveaxis(data, argsorted, range(len(argsorted)))
+    # Add unitary dimension for z
+    data = np.expand_dims(data, axis=3) # (ch, ut, t, z, y, x)
+
+    # Get metadata
+    # metadata per channel/detector
+    metadata_per_channel = []
+    metadata = ptu.tags
+    metadata['file_type'] = 'ptu'
+    metadata['frequency'] = ptu.frequency
+    metadata['tcspc_resolution'] = ptu.tcspc_resolution
+    metadata['x_pixel_size'] = ptu.coords['X'][1]
+    metadata['y_pixel_size'] = ptu.coords['Y'][1]
+    metadata['frame_time'] = ptu.frame_time
+    # Add same metadata to each channel
+    for channel in range(data.shape[0]):
+        metadata_per_channel.append(metadata)
+    return data, metadata_per_channel
+
 def read_single_ptu_file(path, *args, **kwargs):
     """Read a single ptu file.
 
@@ -57,7 +101,7 @@ def read_single_ptu_file(path, *args, **kwargs):
         t_pos = ptu_dims.index('T')
         n_frames = ptu.shape[t_pos]
         if n_frames > 1:
-            warn("Timelapse found in single ptu file. This function is for single frame PTU files only. Returning first frame.")
+            warn("Timelapse found in single ptu file. This function is for single frame PTU files only. Returning first frame.\nUse read_single_ptu_file_2d_timelapse() for timelapse PTU files.")
         # read single frame from axis where time is present
         data = np.take(ptu[:], 0, axis=t_pos)
         ptu_dims.pop(t_pos)  
@@ -260,6 +304,7 @@ def flim_file_reader(path):
     """
     from pathlib import Path
     import tifffile
+    from ptufile import PtuFile
     import numpy as np
     from napari.utils. notifications import show_warning
     # handle both a string and a list of strings
@@ -267,6 +312,7 @@ def flim_file_reader(path):
     # Use Path from pathlib
     paths = [Path(path) for path in paths]
 
+    imread = None
     layer_data = []
     for path in paths:
         # Assume stack if paths are folders (which includes .zarr here)
@@ -292,7 +338,17 @@ def flim_file_reader(path):
                     channel_axis = None
                 if len(shape) < 4:  # single 2D image (ut, y, x)
                     channel_axis = None
-            imread = get_read_function_from_extension[file_extension]
+            # if .ptu, check if it is a 2D timelapse
+            if file_extension == '.ptu':
+                ptu = PtuFile(path)
+                ptu_dims = list(ptu.dims)
+                if 'T' in ptu_dims:
+                    t_pos = ptu_dims.index('T')
+                    n_frames = ptu.shape[t_pos]
+                    if n_frames > 1:
+                        imread = read_single_ptu_file_2d_timelapse
+            if imread is None:
+                imread = get_read_function_from_extension[file_extension]
             # (ch, ut, y, x)  or (ch, ut, t, z, y, x) in case of single tif stack
             data, metadata_list = imread(file_path, channel_axis=channel_axis, viewer_exists=True)
             if data.ndim == 4:  # expand dims if not a stack already
