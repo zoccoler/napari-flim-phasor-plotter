@@ -85,16 +85,43 @@ def load_hazelnut_z_stack():
     """
     import numpy as np
     import zipfile
+    import requests
+    import shutil
     from pathlib import Path
+    from tqdm import tqdm
     from napari_flim_phasor_plotter._reader import read_stack
-
-    zip_file_path = Path(DATA_ROOT / "hazelnut_FLIM_z_stack.zip")
     extracted_folder_path = Path(DATA_ROOT / "unzipped_hazelnut_FLIM_z_stack")
-    # Create the target directory if it doesn't exist
-    extracted_folder_path.mkdir(parents=True, exist_ok=True)
-    # Extract the zip file
-    with zipfile.ZipFile(zip_file_path, 'r') as zip_ref:
-        zip_ref.extractall(extracted_folder_path)
+    # If extracted folder does not exist or is empty, download and extract the zip file
+    if not extracted_folder_path.exists() or (extracted_folder_path.exists() and not any(extracted_folder_path.iterdir())):
+    
+        zip_url = 'https://github.com/zoccoler/hazelnut_FLIM_z_stack_data/raw/main/hazelnut_FLIM_z_stack.zip'
+        zip_file_path = Path(DATA_ROOT / "hazelnut_FLIM_z_stack.zip")
+        # Download the zip file
+        response = requests.get(zip_url)
+
+        # Total size in bytes.
+        total_size = int(response.headers.get('content-length', 0))
+        print(f"Total download size: {total_size/1e6} MBytes")
+        print(f"Downloading to {zip_file_path}"	)
+        block_size = 1024 
+        progress_bar = tqdm(total=total_size, unit='iB', unit_scale=True, desc="Downloading zip file")
+        with open(zip_file_path, 'wb') as zip_file:
+            for block in response.iter_content(block_size):
+                progress_bar.update(len(block))
+                zip_file.write(block)
+        progress_bar.close()
+        if total_size != 0 and progress_bar.n != total_size:
+            print("ERROR: Something went wrong with the download")
+    
+
+        # Create the target directory
+        extracted_folder_path.mkdir(parents=True, exist_ok=True)
+        # Extract the zip file
+        with zipfile.ZipFile(zip_file_path, 'r') as zip_ref:
+            zip_ref.extractall(extracted_folder_path)
+        
+        # Delete the zip file after extraction
+        Path(zip_file_path).unlink()
     folder_path = extracted_folder_path / "hazelnut_FLIM_z_stack"
 
     image, metadata = read_stack(folder_path)

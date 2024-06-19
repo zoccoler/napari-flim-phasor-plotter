@@ -33,6 +33,7 @@ name. The z slice and time point must be separated by an underscore.
         Path to the folder containing the FLIM images.
     """
     import zarr
+    from numcodecs import Blosc
     import dask.array as da
     import numpy as np
     from pathlib import Path
@@ -76,9 +77,11 @@ name. The z slice and time point must be separated by an underscore.
     # zarr file will be saved in the same folder as the input folder
     output_path = folder_path / (folder_path.stem + '.zarr')
     # Using zarr to automatically guess chunk sizes
+    # Use Blosc compressor for better compression and speed
+    compressor = Blosc(cname='zstd', clevel=3, shuffle=Blosc.BITSHUFFLE)
     # Create an empty zarr array of a specified shape and dtype filled with zeros
     zarr_array = zarr.open(output_path, mode='w',
-                           shape=stack_shape, dtype=image_dtype)
+                           shape=stack_shape, dtype=image_dtype, compressor=compressor)
     # Using dask to rechunk micro-time axis in single chunk (for fft calculation afterwards)
     dask_array = da.from_zarr(output_path)
     # Rechunk axis 1 (micro-time axis) to a single chunk

@@ -22,10 +22,10 @@ def test_loading_sample_data():
     assert receptacle_raw_flim_image.shape == (256, 1, 1, 512, 512)
     assert receptacle_intensity_image.shape == (1, 1, 512, 512)
 
-    assert hazelnut_raw_flim_image.shape == (137, 1, 1, 256, 256)
+    assert hazelnut_raw_flim_image.shape == (139, 1, 1, 256, 256)
     assert hazelnut_intensity_image.shape == (1, 1, 256, 256)
 
-    assert hazelnut_z_stack_raw_flim_image.shape == (138, 1, 11, 256, 256)
+    assert hazelnut_z_stack_raw_flim_image.shape == (139, 1, 11, 256, 256)
     assert hazelnut_z_stack_intensity_image.shape == (1, 11, 256, 256)
 
     assert cat_lifetime_raw_flim_image.shape == (256, 1, 1, 256, 256)
