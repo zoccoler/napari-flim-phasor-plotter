@@ -144,16 +144,18 @@ def make_flim_phasor_plot(image_layer: "napari.layers.Image",
         plotter_widget.plot_y_axis.setCurrentIndex(2)
         plotter_widget.plotting_type.setCurrentIndex(1)
         plotter_widget.log_scale.setChecked(True)
+        plotter_widget.frequency = laser_frequency
+        plotter_widget.harmonic = harmonic
 
         # Show parent (PlotterWidget) so that run function can run properly
         plotter_widget.parent().show()
         # Disconnect selector to reset collection of points in plotter
         # (it gets reconnected when 'run' method is run)
         plotter_widget.graphics_widget.selector.disconnect()
-        plotter_widget.run(labels_layer.features,
-                        plotter_widget.plot_x_axis.currentText(),
-                        plotter_widget.plot_y_axis.currentText())
-        plotter_widget.redefine_axes_limits(ensure_full_semi_circle_displayed=True)
+        plotter_widget.run(features=labels_layer.features,
+                        plot_x_axis_name=plotter_widget.plot_x_axis.currentText(),
+                        plot_y_axis_name=plotter_widget.plot_y_axis.currentText(),
+                        ensure_full_semi_circle_displayed=True)
 
         # Update laser frequency spinbox
         # TO DO: access and update widget in a better way
