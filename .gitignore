@@ -85,3 +85,6 @@ venv/
 
 # unzipped data
 unzipped_hazelnut_FLIM_z_stack/
+
+# videos
+*.mp4
