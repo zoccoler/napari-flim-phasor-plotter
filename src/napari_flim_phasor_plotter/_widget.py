@@ -94,10 +94,14 @@ def make_flim_phasor_plot(image_layer: "napari.layers.Image",
         g_flat_masked.compute_chunk_sizes()
         s_flat_masked.compute_chunk_sizes()
 
+    t_coords, z_coords, y_coords, x_coords = np.where(space_mask)
     phasor_components = pd.DataFrame({
         'label': np.ravel(label_image[space_mask]),
         'G': g_flat_masked,
-        'S': s_flat_masked})
+        'S': s_flat_masked,
+        'pixel_x_coordinates': x_coords,
+        'pixel_y_coordinates': y_coords,
+        'pixel_z_coordinates': z_coords,})
     table = phasor_components
     # Build frame column
     frame = np.arange(dc.shape[0])
