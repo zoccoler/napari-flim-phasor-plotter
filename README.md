@@ -13,23 +13,53 @@ Napari-flim-phasor-plotter is a [napari](https://napari.org/stable/) plugin to i
 
 ## Usage
 
-Open a FLIM image to visualize it both as a 'FLIM image series' being a sequence of intensity images each corresponding to an individual time point of the FLIM 'micro-time', plus as a timely summed up image. Scrolling through the FLIM time series provides a first glimpse of lifetimes across image regions.
+### Opening a Raw FLIM Image
 
-Call the plugin from the menu `Plugins > FLIM phasor plotter > Make FLIM Phasor Plot` to generate a phasor plot by pixel-wise Fourier transformation of the decay data. Hereby, select the FLIM image to be used, specify the laser pulse frequency if not read properly from metadata. Define an intensity threshold to exclude pixels of low photon counts, optionally a median filter, and a harmonic for optimal visualization. `Run` creates the phasor plot and an additional labels layer in the layer list. Below is a demonstration:
+Drag and drop a compatible file format (check supported file formats [here below](#input-data)) to open a FLIM image. It gets displayed in two layer: a 'raw FLIM image series' (a sequence of intensity images each corresponding to an individual time point of the FLIM 'micro-time'), and a timely summed up image (usually just known as the 'intensity' image). Scrolling through the FLIM time series provides a first glimpse of lifetimes across image regions.
+
+### Phasor Plotting
+
+Call the plugin from the menu `Plugins > FLIM phasor plotter > Calculate Phasors` to generate a phasor plot by pixel-wise Fourier transformation of the decay data. Hereby, select the FLIM image to be used (it should be the layer with the raw data), specify the laser pulse frequency (if information is present in the file metadata, this field will be updated after phasor calculation). Choose a harmonic for optimal visualization, define an intensity threshold (here in absoluete values) to exclude pixels of low photon counts, and optionally apply a number of iterations `n` of a 3x3 median filter. `Run` creates the phasor plot and an additional labels layer in the layer list. Below is a demonstration:
 
 ![](https://github.com/zoccoler/napari-flim-phasor-plotter/raw/main/images/napari_FLIM_phasor_calculator_Demo.gif)
 
-Change the color-code of the phasor plot to a density plot of various ‘Colormaps’ from the pulldown `Expand for advanced options` and select `HISTOGRAM`. Manually encircle a region of interest in the phasor plot to highlight the corresponding pixels in the newly created image layer. Hold ‘Shift’ to select and visualize several clusters to investigate image regions of similar FLIM patterns. 
+### Phasor Plot Navigation
+
+ Use the toolbar on top of the plot to navigate through the plot. For example, by activating the zoom tool button (magnifying glass icon), you can zoom in (with left click) or out (with right click), just *remember to disbale the zoom tool after using it by clicking on the icon once again*.
+
+Change the colormap of the phasor plot from various `Colormaps` by clicking on the pulldown `Expand for advanced options`. There, you can also choose to display the color range in log scale by checking the `Log scale` checkbox. Optionally, add tau lines to the plot by specifying a range of lifetimes to be displayed (write them separated by commas) in the field `Tau lines` anc click on `Show/hide` to visualize them on top of the phasor plot.
+
+### Phasor Plot Analysis
+
+ Manually encircle a region of interest in the phasor plot to highlight the corresponding pixels in the newly created image layer. Hold ‘Shift’ to select and visualize several clusters as a way to investigate image regions of similar FLIM patterns.
+
+### Saving Results
+
+ Save your segmentation results by selecting (clicking on) the corresponding `Labels` layer (usually named `cluster_ids_in_space`) and then going to `File -> Save Selected Layer`. This can save the layer as a `.tif` file. To save a screenshot of the phasor plot, click on the `Save` button on the toolbar. To save the phasor plot as a `.csv` file, go to `Tools -> Measurement -> Show table (nsr)` and a new widget will show up. From the `labels layer` dropdown, choose the layer that contains the table, whose name starts with `Labelled_pixels_from_`... and then click on the `Run` button. This should bring the table with `G` and `S` values for each pixel. Click on the `Save as csv...` button to save the table as a `.csv` file.
+
+### Sample Data
+
+The plugin comes with a few sample FLIM raw images:
+
+- '2D' raw FLIM images:
+  - Hazelnut (originally a '.ptu' file)
+  - Seminal Receptacle (originally a '.sdt' file)
+- '3D' raw FLIM image stack (Hazelnut 3D)
+  - Hazelnut 3D (originally a series of '.ptu' files)
+- '2D' synthetic FLIM image
+  - Lifetime Cat
+
+ To load it, go to `File > Open Sample -> FLIM phasor plotter`.
 
 ### Input Data
 
 This plugin integrates with [napari-clusters-plotter plugin](https://github.com/BiAPoL/napari-clusters-plotter).
 
 This plugin can read the following FLIM file types:
-  - ".ptu"
-  - ".sdt"
-  - ".tif"
-  - ".zarr"
+  - `.ptu`
+  - `.sdt`
+  - `.tif`
+  - `.zarr`
 
 This plugin works with the following data shapes:
   - 2D FLIM images (actually 3D data where FLIM counts are in the first axis).
@@ -37,11 +67,12 @@ This plugin works with the following data shapes:
   - 3D timelapse FLIM images (actually 5D data where FLIM counts are in the first axis).
   - Multichannel '.tif' or '.zarr' data may need to be loaded separately.
 
-The plugin outputs data axes in the following order (data from multiple detectors are displayed as distinct napari layers):
+If you read your files using this plugin, it returns and works with the data axes in the following order (data from multiple detectors are displayed as distinct napari layers):
 
 (`flim_counts`, `time`, `z`, `y`, `x`)
 
-It also outputs the standard intensity image in another layer by summing the `flim_counts` dimension.
+Even if the data is 2D, the plugin will add a unitary `time` and a `z` axis.
+It also provides the standard intensity image in another layer by summing the `flim_counts` dimension.
 
 ### Data Conversion
 
@@ -50,6 +81,8 @@ If a collection of raw (uncompressed) images are larger than 4GB, we recommend c
 _Warning: In the current version, lazy loading with `.zarr` is available, but processing may still load all data into memory, so keep track of your memory usage._
 
 ![](https://github.com/zoccoler/napari-flim-phasor-plotter/raw/main/images/convert_to_zarr.png)
+
+### Loading Stacks
 
 If you have multiple slices or time-points as separated files, you can choose a folder containing the files. In order for the plugin to properly build a stack, the file names must contain some indication about which slice or time-point they represent, i.e., **each file name should contain a `_t` and/or `_z` followed by a number**.
 
@@ -65,6 +98,14 @@ Here are a few example templates:
   - `image_t001_z002.tif`
   - ...
   - `image_t002_z001.tif`
+
+## Limitations
+
+The plugin does not yet support:
+- Phasor calibration
+- Round cluster selection (only free-hand selection is available)
+- Pseudo-channel generation from selected clusters in the phasor plot
+- FRET analysis
 
 
 ## Installation
