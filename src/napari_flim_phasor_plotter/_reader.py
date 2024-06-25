@@ -131,8 +131,14 @@ def read_single_ptu_file(path, *args, **kwargs):
 def read_single_sdt_file(path, *args, **kwargs):
     """Read a single sdt file."""
     import sdtfile
+    from warnings import warn
     sdt_file = sdtfile.SdtFile(path)  # header to be implemented
-    data_raw = np.asarray(sdt_file.data)  # option to choose channel to include
+    shapes = [array.shape for array in sdt_file.data]
+    if all(shape == shapes[0] for shape in shapes):
+        data_raw = np.asarray(sdt_file.data)  # get all arrays if they have the same shape
+    else:
+        data_raw = np.asarray([sdt_file.data[0]])  # get only the first array if they have different shapes
+        warn("Different shapes found in sdt file. Only the first array will be read.")
     # from (ch, y, x, ut) to (ch, ut, y, x)
     data = np.moveaxis(np.stack(data_raw), -1, 1)
 
