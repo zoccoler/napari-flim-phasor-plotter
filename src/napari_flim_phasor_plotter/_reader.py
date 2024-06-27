@@ -550,7 +550,7 @@ def get_max_zslices(file_paths, file_extension):
     max_z = max([get_current_tz(file_path)
                 for file_path in file_paths if file_path.suffix == file_extension])[1]
     if max_z is None:
-        return 1
+        return 0
     return max_z
 
 
@@ -572,7 +572,7 @@ def get_max_time_points(file_paths, file_extension):
     max_time = max([get_current_tz(file_path)
                    for file_path in file_paths if file_path.suffix == file_extension])[0]
     if max_time is None:
-        return 1
+        return 0
     return max_time
 
 
@@ -631,7 +631,7 @@ def get_structured_list_of_paths(file_paths, file_extension):
     t_path_list = []
     z_path_list = []
     file_paths = natsorted(file_paths)
-    previous_t = 1
+    previous_t = 0
     for file_path in file_paths:
         if file_path.suffix == file_extension:
             current_t, current_z = get_current_tz(file_path)
