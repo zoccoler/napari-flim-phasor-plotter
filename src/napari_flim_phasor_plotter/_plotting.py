@@ -1,3 +1,4 @@
+from napari.layers import Layer
 from napari_clusters_plotter._plotter import PlotterWidget
 from qtpy.QtCore import QSize
 from qtpy.QtWidgets import QHBoxLayout, QLineEdit, QLabel, QPushButton, QWidget
@@ -41,7 +42,13 @@ class PhasorPlotterWidget(PlotterWidget):
         if self.tau_lines_button.isChecked():
             self.add_tau_lines_from_widget()
         self.redefine_axes_limits(ensure_full_semi_circle_displayed=ensure_full_semi_circle_displayed)
-        
+    
+    def _draw_cluster_image(self, is_tracking_data: bool, plot_cluster_name: str, cluster_ids, cmap_dict=None) -> Layer:
+        visualized_layer = super()._draw_cluster_image(is_tracking_data, plot_cluster_name, cluster_ids, cmap_dict)
+        image_layer_name = self.layer_select.value.name.replace('Labelled_pixels_from_', '')
+        visualized_layer.name = 'Phasor_clusters_from_' + image_layer_name
+        visualized_layer.opacity = 0.5
+        return visualized_layer
 
     def redefine_axes_limits(self, ensure_full_semi_circle_displayed=True):
         # Redefine axes limits
