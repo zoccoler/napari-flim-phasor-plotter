@@ -150,12 +150,12 @@ def load_lifetime_cat_synthtetic_single_image():
     # Read metadata from associated yaml file
     with open(DATA_ROOT / "lifetime_cat_metadata.yml", "r") as stream:
         metadata = yaml.safe_load(stream)
-    return [(image, {'name': 'lifetime cat synthetic image',
+    return [(image, {'name': 'raw lifetime cat synthetic image',
                      'metadata': metadata,
                      'contrast_limits': (np.amin(image[image.shape[0] // 2, ...]),
                                          np.amax(image[image.shape[0] // 2, ...])),
                      }),
-            (np.amax(image, axis=0), {'name': 'lifetime cat synthetic image',
+            (np.amax(image, axis=0), {'name': 'intensity lifetime cat synthetic image',
                                       'metadata': metadata,
                                       }),
             ]

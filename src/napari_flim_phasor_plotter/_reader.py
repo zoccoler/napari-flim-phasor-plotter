@@ -131,8 +131,14 @@ def read_single_ptu_file(path, *args, **kwargs):
 def read_single_sdt_file(path, *args, **kwargs):
     """Read a single sdt file."""
     import sdtfile
+    from warnings import warn
     sdt_file = sdtfile.SdtFile(path)  # header to be implemented
-    data_raw = np.asarray(sdt_file.data)  # option to choose channel to include
+    shapes = [array.shape for array in sdt_file.data]
+    if all(shape == shapes[0] for shape in shapes):
+        data_raw = np.asarray(sdt_file.data)  # get all arrays if they have the same shape
+    else:
+        data_raw = np.asarray([sdt_file.data[0]])  # get only the first array if they have different shapes
+        warn("Different shapes found in sdt file. Only the first array will be read.")
     # from (ch, y, x, ut) to (ch, ut, y, x)
     data = np.moveaxis(np.stack(data_raw), -1, 1)
 
@@ -395,9 +401,9 @@ def read_stack(folder_path):
     if file_extension == '.zarr':
         file_paths = folder_path
         # TO DO: read zarr metadata
-        data = zarr.open(file_paths, mode='r+')
-        data = da.from_zarr(data)
-        metadata_list = []
+        file = zarr.open(file_paths, mode='r+')
+        data = da.from_zarr(file)
+        metadata_list = [metadata for key, metadata in file.attrs.asdict().items()]
     else:
         # Get all file path with specified file extension
         file_paths = natsorted([file_path for file_path in folder_path.iterdir(
@@ -544,7 +550,7 @@ def get_max_zslices(file_paths, file_extension):
     max_z = max([get_current_tz(file_path)
                 for file_path in file_paths if file_path.suffix == file_extension])[1]
     if max_z is None:
-        return 1
+        return 0
     return max_z
 
 
@@ -566,7 +572,7 @@ def get_max_time_points(file_paths, file_extension):
     max_time = max([get_current_tz(file_path)
                    for file_path in file_paths if file_path.suffix == file_extension])[0]
     if max_time is None:
-        return 1
+        return 0
     return max_time
 
 
@@ -625,7 +631,7 @@ def get_structured_list_of_paths(file_paths, file_extension):
     t_path_list = []
     z_path_list = []
     file_paths = natsorted(file_paths)
-    previous_t = 1
+    previous_t = 0
     for file_path in file_paths:
         if file_path.suffix == file_extension:
             current_t, current_z = get_current_tz(file_path)

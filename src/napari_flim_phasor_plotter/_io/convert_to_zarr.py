@@ -70,7 +70,7 @@ name. The z slice and time point must be separated by an underscore.
     max_time_point = get_max_time_points(file_paths, file_extension)
     # Build stack shape with the fllowing convention: (channel, ut, time, z, y, x)
     stack_shape = (
-        *image_slice_shape[:-2], max_time_point, max_z, *image_slice_shape[-2:])
+        *image_slice_shape[:-2], max_time_point+1, max_z+1, *image_slice_shape[-2:])
     # Get a nested list of time point containing a list of z slices
     list_of_time_point_paths = get_structured_list_of_paths(
         file_paths, file_extension)
@@ -90,11 +90,10 @@ name. The z slice and time point must be separated by an underscore.
     da.to_zarr(dask_array, output_path, overwrite=True)
     # Read zarr as read/write
     zarr_array = zarr.open(output_path, mode='r+')
-
     # Fill zarr array with data
     for z_paths, i in zip(tqdm(list_of_time_point_paths, label='time_points'), range(len(list_of_time_point_paths))):
         for path, j in zip(tqdm(z_paths, label='z-slices'), range(len(z_paths))):
-            data, _ = imread(path)
+            data, metadata_list = imread(path)
             # If single channel, add a new axis
             if len(data.shape) == 3:
                 zarr_array[0, :data.shape[0], i,
@@ -102,5 +101,8 @@ name. The z slice and time point must be separated by an underscore.
             else:
                 zarr_array[:data.shape[0], :data.shape[1], i,
                         j, :data.shape[2], :data.shape[3]] = data
-
+    zarr_metadata = dict()
+    for i, metadata in enumerate(metadata_list):
+        zarr_metadata['channel ' + str(i)] = metadata
+        zarr_array.attrs.update(zarr_metadata)
     print('Done')
