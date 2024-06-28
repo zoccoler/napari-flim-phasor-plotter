@@ -401,9 +401,9 @@ def read_stack(folder_path):
     if file_extension == '.zarr':
         file_paths = folder_path
         # TO DO: read zarr metadata
-        data = zarr.open(file_paths, mode='r+')
-        data = da.from_zarr(data)
-        metadata_list = []
+        file = zarr.open(file_paths, mode='r+')
+        data = da.from_zarr(file)
+        metadata_list = [metadata for key, metadata in file.attrs.asdict().items()]
     else:
         # Get all file path with specified file extension
         file_paths = natsorted([file_path for file_path in folder_path.iterdir(
