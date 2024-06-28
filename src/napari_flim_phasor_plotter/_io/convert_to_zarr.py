@@ -93,7 +93,7 @@ name. The z slice and time point must be separated by an underscore.
     # Fill zarr array with data
     for z_paths, i in zip(tqdm(list_of_time_point_paths, label='time_points'), range(len(list_of_time_point_paths))):
         for path, j in zip(tqdm(z_paths, label='z-slices'), range(len(z_paths))):
-            data, _ = imread(path)
+            data, metadata_list = imread(path)
             # If single channel, add a new axis
             if len(data.shape) == 3:
                 zarr_array[0, :data.shape[0], i,
@@ -101,5 +101,8 @@ name. The z slice and time point must be separated by an underscore.
             else:
                 zarr_array[:data.shape[0], :data.shape[1], i,
                         j, :data.shape[2], :data.shape[3]] = data
-
+    zarr_metadata = dict()
+    for i, metadata in enumerate(metadata_list):
+        zarr_metadata['channel ' + str(i)] = metadata
+        zarr_array.attrs.update(zarr_metadata)
     print('Done')
