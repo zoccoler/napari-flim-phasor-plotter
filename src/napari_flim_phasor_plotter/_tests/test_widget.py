@@ -1,7 +1,6 @@
 from napari_flim_phasor_plotter._widget import make_flim_phasor_plot
 from napari_flim_phasor_plotter._synthetic import make_synthetic_flim_data
 from napari_flim_phasor_plotter._synthetic import create_time_array
-from napari_flim_phasor_plotter._plotting import PhasorPlotterWidget
 import numpy as np
 import pandas as pd
 # make_napari_viewer is a pytest fixture that returns a napari viewer object
@@ -63,7 +62,7 @@ def test_make_flim_phasor_plot_and_plotter(make_napari_viewer, capsys):
     assert plotter_widget is not None
 
     assert len(viewer.layers) == 2
-    assert list(labels_layer.features.columns) == ['label', 'G', 'S', 'pixel_x_coordinates', 'pixel_y_coordinates', 'pixel_z_coordinates', 'frame']
+    assert list(labels_layer.features.columns) == list(output_table.columns)
     assert labels_layer.features.shape == (7, 7)
     assert np.allclose(labels_layer.features.values,
                        output_table.values, rtol=0, atol=1e-5)
@@ -74,13 +73,14 @@ def test_make_flim_phasor_plot_and_plotter(make_napari_viewer, capsys):
     plotter_widget.tau_lines_line_edit_widget.setText('0.1, 1')
     plotter_widget.tau_lines_button.click()
 
-    # TODO: Fix the following test (manually it works)
     # # Select region around 1 ns
-    # plotter_widget.graphics_widget.selector.onselect(input_selection_vertices)
+    plotter_widget.graphics_widget.selector.onselect(input_selection_vertices)
 
     # # Check if the selected cluster image is displayed
-    # assert len(viewer.layers) == 3
-    # phasor_clusters_layer = viewer.layers[-1]
-    # assert np.allclose(phasor_clusters_layer.data, output_selected_cluster_image, rtol=0, atol=1e-5)
+    assert len(viewer.layers) == 3
+    phasor_clusters_layer = viewer.layers[-1]
+    assert phasor_clusters_layer.name.startswith(
+        'Phasor_clusters_from_')
+    assert np.allclose(phasor_clusters_layer.data, output_selected_cluster_image, rtol=0, atol=1e-5)
 
     
