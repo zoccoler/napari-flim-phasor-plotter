@@ -26,19 +26,26 @@ class PhasorPlotterWidget(PlotterWidget):
         self.advanced_options_container.layout().addWidget(self.tau_lines_container)
         self.tau_lines_button.clicked.connect(self.on_show_hide_tau_lines)
 
+        # Start with histogram plot
+        self.plotting_type.setCurrentIndex(1)
+        # Start with log scale
+        self.log_scale.setChecked(True)
+
     def run(self,
             features,
             plot_x_axis_name,
             plot_y_axis_name,
-            plot_cluster_name=None,
+            plot_cluster_name,
             redraw_cluster_image=True,
+            force_redraw=True,
             ensure_full_semi_circle_displayed=False
             ):
         super().run(features=features,
                     plot_x_axis_name=plot_x_axis_name,
                     plot_y_axis_name=plot_y_axis_name,
                     plot_cluster_name=plot_cluster_name,
-                    redraw_cluster_image=redraw_cluster_image,)
+                    redraw_cluster_image=redraw_cluster_image,
+                    force_redraw=force_redraw)
         if self.tau_lines_button.isChecked():
             self.add_tau_lines_from_widget()
         self.redefine_axes_limits(ensure_full_semi_circle_displayed=ensure_full_semi_circle_displayed)

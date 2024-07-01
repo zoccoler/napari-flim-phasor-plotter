@@ -159,6 +159,8 @@ def make_flim_phasor_plot(image_layer: "napari.layers.Image",
         plotter_widget.run(features=labels_layer.features,
                         plot_x_axis_name=plotter_widget.plot_x_axis.currentText(),
                         plot_y_axis_name=plotter_widget.plot_y_axis.currentText(),
+                        plot_cluster_name=plotter_widget.plot_cluster_id.currentText(),
+                        redraw_cluster_image=False,
                         ensure_full_semi_circle_displayed=True)
 
         # Update laser frequency spinbox
@@ -260,7 +262,7 @@ def get_n_largest_cluster_labels(features_table: 'pandas.DataFrame', n: int=1, c
     if 'MANUAL' in clustering_id:
         sorted_cluster_ids = sorted_cluster_ids[sorted_cluster_ids != 1] # remove unselected clusters when selection is manual
     
-    return sorted_cluster_ids[:n]
+    return sorted_cluster_ids[:n].tolist()
 
 def split_n_largest_cluster_labels(labels_layer: "napari.layers.Labels", clusters_labels_layer: "napari.layers.Labels", clustering_id: str, n: int=1) -> List["napari.layers.Labels"]:
     """Split the n largest clusters from a labels layer inot new layers
@@ -268,7 +270,7 @@ def split_n_largest_cluster_labels(labels_layer: "napari.layers.Labels", cluster
     Parameters
     ----------
     labels_layer : napari.layers.Labels
-        labels layer
+        labels layer with features table
     clusters_labels_layer : napari.layers.Labels
         labels layer with clusters
     clustering_id : str
