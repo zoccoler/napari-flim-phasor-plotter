@@ -159,6 +159,8 @@ def make_flim_phasor_plot(image_layer: "napari.layers.Image",
         plotter_widget.run(features=labels_layer.features,
                         plot_x_axis_name=plotter_widget.plot_x_axis.currentText(),
                         plot_y_axis_name=plotter_widget.plot_y_axis.currentText(),
+                        plot_cluster_name=plotter_widget.plot_cluster_id.currentText(),
+                        redraw_cluster_image=False,
                         ensure_full_semi_circle_displayed=True)
 
         # Update laser frequency spinbox
