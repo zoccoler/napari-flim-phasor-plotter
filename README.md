@@ -6,6 +6,7 @@
 [![tests](https://github.com/zoccoler/napari-flim-phasor-plotter/workflows/tests/badge.svg)](https://github.com/zoccoler/napari-flim-phasor-plotter/actions)
 [![codecov](https://codecov.io/gh/zoccoler/napari-flim-phasor-plotter/branch/main/graph/badge.svg)](https://codecov.io/gh/zoccoler/napari-flim-phasor-plotter)
 [![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-flim-phasor-plotter)](https://napari-hub.org/plugins/napari-flim-phasor-plotter)
+[![DOI](https://zenodo.org/badge/578127094.svg)](https://zenodo.org/doi/10.5281/zenodo.12620955)
 
 Napari-flim-phasor-plotter is a [napari](https://napari.org/stable/) plugin to interactively load and show raw fluorescence lifetime imaging microscopy (FLIM) single images and series and generate phasor plots. These are Fourier transforms of the decay data being visualized using the [napari-clusters-plotter](https://github.com/BiAPoL/napari-clusters-plotter) plotter, adapted to suit the FLIM context. This allows qualitative and quantitative downstream analysis of FLIM images.  
 
@@ -199,7 +200,9 @@ the coverage at least stays the same before you submit a pull request.
 ## License
 
 Distributed under the terms of the [BSD-3] license,
-"napari-flim-phasor-plotter" is free and open source software
+"napari-flim-phasor-plotter" is free and open source software. 
+
+If you use this plugin in a publication, please cite us: https://doi.org/10.5281/zenodo.12620956
 
 ## Issues
 
