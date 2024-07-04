@@ -47,27 +47,23 @@ Click [here](https://github.com/conda-forge/miniforge?tab=readme-ov-file#downloa
 
 Create a conda environment:
 
-    mamba create -n napari-flim-phasor-env python=3.9
+    mamba create -n napari-flim-phasor-env python=3.9 napari pyqt git
     
 Activate the environment:
 
     mamba activate napari-flim-phasor-env
-    
-Then install `napari` and `napari-clusturs-plotter` (plus git if on Windows):
 
-    mamba install -c conda-forge napari==0.4.17 napari-clusters-plotter git pyqt
-
-_Optional, but we **strongly** recommend having the `devbio-napari` plugin bundle also installed for post-processing. This can be done with:_
-
-    mamba install -c conda-forge devbio-napari
-
-Finally install `napari-flim-phasor-plotter` plugin with:
+Install `napari-flim-phasor-plotter` plugin with:
 
     pip install napari-flim-phasor-plotter
  
 Alternatively, clone this repository and install the latest plugin development version with:
 
     pip install git+https://github.com/zoccoler/napari-flim-phasor-plotter.git
+
+_Optional, but we **strongly** recommend having the `devbio-napari` plugin bundle also installed for post-processing. This can be done with:_
+
+    mamba install -c conda-forge devbio-napari=0.10.0 scikit-image=0.24.0
 
 ## Usage
 
@@ -191,6 +187,7 @@ The plugin does not yet support:
 - Pseudo-channel generation from selected clusters in the phasor plot
 - FRET analysis
 - Tile processing
+- Fitting of decay curves
 
 ## Contributing
 
