@@ -525,11 +525,13 @@ def get_current_tz(file_path):
     file_name = file_path.stem
     matches_z = re.search(pattern_z, file_name)
     if matches_z is not None:
-        current_z = int(matches_z.group(1))  # .zfill(2)
+        current_z = int(matches_z.group(1))
+        current_z -= 1 # 0-based index while file names convention are 1-based
     matches_t = re.search(pattern_t, file_name)
     if matches_t is not None:
         current_t = int(matches_t.group(1))
-    return current_t - 1, current_z - 1 # file names start at 1, but indices in python should start at 0 
+        current_t -= 1 # 0-based index while file names convention are 1-based
+    return current_t, current_z 
 
 
 def get_max_zslices(file_paths, file_extension):
