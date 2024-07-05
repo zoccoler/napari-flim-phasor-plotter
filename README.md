@@ -96,7 +96,7 @@ Drag and drop a compatible file format (check supported file formats [here below
 
 #### 3. Loading Stacks
 
-If you have multiple slices or time-points as separated files, you can choose a folder containing the files. In order for the plugin to properly build a stack, the file names must contain some indication about which slice or time-point they represent, i.e., **each file name should contain a `_t` and/or `_z` followed by a number**.
+If you have multiple slices or time-points as separated files, you can choose a folder containing the files. In order for the plugin to properly build a stack, the file names must contain some indication about which slice or time-point they represent, i.e., **each file name should contain a `_t` and/or `_z` followed by a number**. This number should start from `1` and increase by 1 for each new slice or time-point.
 
 Here are a few example templates:
 - timelapse:
