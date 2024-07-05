@@ -27,7 +27,8 @@ def test_convert_to_zarr():
     # Save synthetic FLIM data as multiple tif files
     for i in range(flim_data.shape[2]): # iterate over time points
         for j in range(flim_data.shape[3]): # iterate over z planes
-            io.imsave(local_folder_path / f"test_t{i}_z{j}.tif", flim_data[:, :, i, j, :, :]) # (ch, ut, y, x)
+            # file name convention starts at 1, e.g., "name_t001_z001"
+            io.imsave(local_folder_path / f"test_t{i+1}_z{j+1}.tif", flim_data[:, :, i, j, :, :]) # (ch, ut, y, x)
 
     widget = convert_to_zarr.convert_folder_to_zarr()
     # Set the folder path
