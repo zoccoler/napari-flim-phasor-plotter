@@ -61,10 +61,6 @@ Alternatively, clone this repository and install the latest plugin development v
 
     pip install git+https://github.com/zoccoler/napari-flim-phasor-plotter.git
 
-_Optional, but we **strongly** recommend having the `devbio-napari` plugin bundle also installed for post-processing. This can be done with:_
-
-    mamba install -c conda-forge devbio-napari=0.10.0 scikit-image=0.24.0
-
 ## Usage
 
 ### Loading Raw FLIM Data
@@ -157,7 +153,7 @@ A common step is to select a single cluster of interest for further processing. 
 
 To connect small isolated regions and remove small holes within the mask, we can use the `smooth_cluster_mask` function. This can be accessed via `Plugins -> FLIM phasor plotter -> Smooth Cluster Mask`. This will remove holes with an area smaller than the specified `fill area px` in total number of pixels and connect regions within a given `smooth radius`. Don't forget to select the layer containing the mask before running the function, because this function expects a layer with a single label (like a binary mask).
 
-Beyond this point, we can use other plugins, like the `devbio-napari` plugin bundle, to further process the mask. For example, we can perform instance segmentation on the mask via `Tools -> Segmentation / labeling -> Connectec component labeling (scikit-image, nsbatwm)`. We can also extract features from the objects via `Tools -> Measurement tables -> Objetct Features/Properties (scikit-image, nsr)`.
+Beyond this point, we can use other plugins, like the `napari-segment-blobs-and-things-with-membranes` and `napari-skimage-regionprops` plugins, to further process the mask. For example, we can perform instance segmentation on the mask via `Tools -> Segmentation / labeling -> Connectec component labeling (scikit-image, nsbatwm)`. We can also extract features from the objects via `Tools -> Measurement tables -> Objetct Features/Properties (scikit-image, nsr)`.
 
 Below is a demonstration of the post-processing steps:
 
