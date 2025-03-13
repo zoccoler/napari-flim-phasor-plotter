@@ -1,6 +1,7 @@
+from napari.utils import notifications
+import warnings
 
-
-def format_metadata(flim_metadata, stack_shape=None, z_pixel_size = 0.5, pixel_size_unit = 'µm', time_resolution_per_slice = 0.663, time_unit = 's', channel_names = ['0', '1'], axes='CTZYX', timelapse=True):
+def format_metadata(flim_metadata, stack_shape, output_axes_order='CTZYX', x_pixel_size = 0, y_pixel_size = 0, z_pixel_size = 0, pixel_size_unit = 'm', time_resolution_per_slice = 0, time_unit = 's', channel_names = [], micro_time_resolution = 0, micro_time_unit = 'ps', timelapse=True):
     """Format metadata for OME-TIFF based on the provided metadata and XML file.
 
     Parameters
@@ -29,30 +30,81 @@ def format_metadata(flim_metadata, stack_shape=None, z_pixel_size = 0.5, pixel_s
     Tuple[Dict, Dict]
         Metadata for the whole timelapse without photon counts axis and metadata for single timepoint with photon counts axis.
     """
-    
+    z_stack = False
+    multichannel = False
     if stack_shape is None:
-        raise ValueError('stack_shape must be provided if no XML file is provided')
-    # If no XML file is provided, use the metadata from the Zarr file along with some manual inputs
-    # The time resolution must be calculated depending on the number of z-slices
-    time_resolution = time_resolution_per_slice * stack_shape[-3] 
+        raise ValueError('stack_shape must be provided')
+    if stack_shape[output_axes_order.index('Z')] > 1:
+        z_stack = True
+    if stack_shape[output_axes_order.index('C')] > 1:
+        multichannel = True
+
+    # Build metadata dictionary for timelapsed data
     metadata_timelapse = dict()
-    metadata_timelapse['axes'] = axes
+    metadata_timelapse['axes'] = output_axes_order
+    # Feed user-provided XY pixel sizes if not present in the flim_metadata (metadata from the raw FLIM data file)
+    if 'x_pixel_size' not in flim_metadata[0]:
+        if x_pixel_size == 0:
+            notifications.show_info('x_pixel_size not found in file metadata, it must be provided manually')
+            warnings.warn('x_pixel_size not found in file metadata, it must be provided manually')
+            return None, None
+        flim_metadata[0]['x_pixel_size'] = x_pixel_size
+    if 'y_pixel_size' not in flim_metadata[0]:
+        if y_pixel_size == 0:
+            notifications.show_info('y_pixel_size not found in file metadata, it must be provided manually')
+            warnings.warn('y_pixel_size not found in file metadata, it must be provided manually')
+            return None, None
+        flim_metadata[0]['y_pixel_size'] = y_pixel_size
+    
+    # Fill in x and y pixel sizes metadata for ome-tiff
     metadata_timelapse['PhysicalSizeX'] = flim_metadata[0]['x_pixel_size']
     metadata_timelapse['PhysicalSizeXUnit'] = pixel_size_unit
     metadata_timelapse['PhysicalSizeY'] = flim_metadata[0]['y_pixel_size']
     metadata_timelapse['PhysicalSizeYUnit'] = pixel_size_unit
-    metadata_timelapse['PhysicalSizeZ'] = z_pixel_size
-    metadata_timelapse['PhysicalSizeZUnit'] = pixel_size_unit
-    if timelapse:
+    # Fill in z pixel size metadata for ome-tiff
+    if z_stack:
+        if z_pixel_size == 0:
+            notifications.show_info('z_pixel_size must be provided manually')
+            warnings.warn('z_pixel_size must be provided manually')
+            return None, None
+        metadata_timelapse['PhysicalSizeZ'] = z_pixel_size
+        metadata_timelapse['PhysicalSizeZUnit'] = pixel_size_unit
+    if timelapse: # If it is a true timelapse (not one having photon counts as the time axis)
+        if time_resolution_per_slice == 0:
+            notifications.show_info('time_resolution_per_slice must be provided')
+            warnings.warn('time_resolution_per_slice must be provided')
+            return None, None
+        if z_stack:
+            # Time resolution is the time resolution per slice multiplied by the number of z-slices
+            time_resolution = time_resolution_per_slice * stack_shape[output_axes_order.index('Z')]
+        else:
+            # Time resolution is the time resolution per slice (not a 3D stack)
+            time_resolution = time_resolution_per_slice
         metadata_timelapse['TimeIncrement'] = time_resolution
         metadata_timelapse['TimeIncrementUnit'] = time_unit
-    if 'C' in axes:
+    if multichannel:
         metadata_timelapse['Channel'] = dict()
+        if channel_names == []:
+            channel_names = [("Channel " + str(i)) for i in range(stack_shape[output_axes_order.index('C')])]
+        else:
+            if len(channel_names) != stack_shape[output_axes_order.index('C')]:
+                notifications.show_info(f'Number of channel names must match the number of channels in the data. Number of channels in the data: {stack_shape[output_axes_order.index("C")]}')
+                warnings.warn(f'Number of channel names must match the number of channels in the data. Number of channels in the data: {stack_shape[output_axes_order.index("C")]}')
+                return None, None
         metadata_timelapse['Channel']['Name'] = channel_names
-        
 
-    metadata_single_timepoint = metadata_timelapse.copy()
-    metadata_single_timepoint['TimeIncrement'] = flim_metadata[0]['tcspc_resolution'] * 1e12
-    metadata_single_timepoint['TimeIncrementUnit'] = 'ps'
+    # For the single timepoint metadata, replace the time axis with the photon counts axis
+    metadata_single_timepoint = metadata_timelapse.copy() 
+    print(metadata_single_timepoint)
+    if 'tcspc_resolution' in flim_metadata[0] and flim_metadata[0]['tcspc_resolution'] is not None:
+        metadata_single_timepoint['TimeIncrement'] = flim_metadata[0]['tcspc_resolution'] * 1e12
+        metadata_single_timepoint['TimeIncrementUnit'] = 'ps'
+    else:
+        if micro_time_resolution == 0:
+            notifications.show_info('micro_time_resolution must be provided')
+            warnings.warn('micro_time_resolution must be provided')
+            return None, None
+        metadata_single_timepoint['TimeIncrement'] = micro_time_resolution
+        metadata_single_timepoint['TimeIncrementUnit'] = micro_time_unit
 
     return metadata_timelapse, metadata_single_timepoint

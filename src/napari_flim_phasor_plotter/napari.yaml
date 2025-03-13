@@ -25,7 +25,13 @@ contributions:
       title: Open FLIM Phasor Plotter
     - id: napari-flim-phasor-plotter.convert_to_zarr
       python_name: napari_flim_phasor_plotter._io.convert_to_zarr:convert_folder_to_zarr
-      title: Convert to zarr
+      title: Convert Folder (Stack) to zarr
+    - id: napari-flim-phasor-plotter.convert_folder_to_ome_tif
+      python_name: napari_flim_phasor_plotter._io.convert_to_ome_tif:convert_folder_to_ome_tif
+      title: Convert Folder (Stack) to ome-tif
+    - id: napari-flim-phasor-plotter.convert_file_to_ome_tif
+      python_name: napari_flim_phasor_plotter._io.convert_to_ome_tif:convert_file_to_ome_tif
+      title: Convert Single File to ome-tif
     - id: napari-flim-phasor-plotter.apply_binning
       python_name: napari_flim_phasor_plotter._widget:apply_binning_widget
       title: Apply binning to TCSPC FLIM data
@@ -60,7 +66,11 @@ contributions:
     - command: napari-flim-phasor-plotter.calculate_phasors
       display_name: Calculate Phasors
     - command: napari-flim-phasor-plotter.convert_to_zarr
-      display_name: Convert to zarr
+      display_name: Convert Folder (Stack) to zarr
+    - command: napari-flim-phasor-plotter.convert_folder_to_ome_tif
+      display_name: Convert Folder (Stack) to ome-tif
+    - command: napari-flim-phasor-plotter.convert_file_to_ome_tif
+      display_name: Convert Single File to ome-tif
     - command: napari-flim-phasor-plotter.apply_binning
       display_name: Apply binning to TCSPC FLIM data
     - command: napari-flim-phasor-plotter.open_phasor_plot
