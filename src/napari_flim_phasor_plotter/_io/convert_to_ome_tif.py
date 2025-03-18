@@ -163,7 +163,6 @@ def convert_folder_to_ome_tif(folder_path: pathlib.Path,
                     micro_time_resolution=micro_time_resolution,
                     micro_time_unit=micro_time_unit,
                     timelapse=timelapse,)
-                print(metadata_timelapse, metadata_single_timepoint)
                 if metadata_timelapse is None:
                     return
             # Populate nuumpy array with data
@@ -202,9 +201,8 @@ def convert_folder_to_ome_tif(folder_path: pathlib.Path,
     output_file_name = folder_path.stem + '_summed_intensity.ome.tif'
     with tifffile.TiffWriter(output_path / output_file_name, ome=True) as tif:
         tif.write(numpy_array_summed_intensity[:], metadata=metadata_timelapse, compression='zlib')
-
     print('Done')
-    notifications.show_info(f'Conversion to OME-TIFF completed. OME-TIFFs saved in \n{output_path}')
+    notifications.show_info(f'Conversion to OME-TIFF completed.\nOME-TIFFs saved in\n{output_path}')
 
 @magic_factory(call_button='Convert', layout="vertical",
             folder_path={'widget_type': 'FileEdit',
@@ -318,15 +316,11 @@ def convert_file_to_ome_tif(folder_path: pathlib.Path,
     imread = get_read_function_from_extension[file_extension]
     print('Single file')
     data, flim_metadata = imread(folder_path)
-    print(data.shape)
-    # TODO: fix axes order for .sdt files
     # Add channel dimension in case it is missing
     if len(data.shape) == 3:
         data = data[np.newaxis, :]
-    print(data.shape)
     # Add unitary axis for z
     data = data[:, :, np.newaxis]
-    print(data.shape)
     metadata_timelapse, metadata_single_timepoint = format_metadata(
         flim_metadata=flim_metadata,
         stack_shape=data.shape,
@@ -340,12 +334,13 @@ def convert_file_to_ome_tif(folder_path: pathlib.Path,
         micro_time_resolution=micro_time_resolution,
         micro_time_unit=micro_time_unit,
         timelapse=False,)
+    if metadata_timelapse is None:
+        return
     print(f"Saving OME-TIF...")
     output_path = folder_path.parent / 'OME-TIFs'
     output_path.mkdir(exist_ok=True)
     output_file_name = folder_path.stem + '.ome.tif'
     with tifffile.TiffWriter(output_path / output_file_name, ome=True) as tif:
         tif.write(data, metadata=metadata_single_timepoint, compression='zlib')
-    
     print('Done')
-    notifications.show_info(f'Conversion to OME-TIFF completed. OME-TIFFs saved in \n{output_path}')
+    notifications.show_info(f'Conversion to OME-TIFF completed.\nOME-TIFFs saved in\n{output_path}')
