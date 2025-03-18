@@ -1,5 +1,7 @@
 name: napari-flim-phasor-plotter
 display_name: FLIM phasor plotter
+visibility: public
+categories: ["Annotation", "Segmentation", "Acquisition"]
 contributions:
   commands:
     - id: napari-flim-phasor-plotter.get_reader
@@ -25,10 +27,10 @@ contributions:
       title: Open FLIM Phasor Plotter
     - id: napari-flim-phasor-plotter.convert_to_zarr
       python_name: napari_flim_phasor_plotter._io.convert_to_zarr:convert_folder_to_zarr
-      title: Convert Folder (Stack) to zarr
+      title: Convert Folder (Stack) to 6D zarr
     - id: napari-flim-phasor-plotter.convert_folder_to_ome_tif
       python_name: napari_flim_phasor_plotter._io.convert_to_ome_tif:convert_folder_to_ome_tif
-      title: Convert Folder (Stack) to ome-tif
+      title: Convert Folder (Stack) to 5D ome-tif (one file per timepoint)
     - id: napari-flim-phasor-plotter.convert_file_to_ome_tif
       python_name: napari_flim_phasor_plotter._io.convert_to_ome_tif:convert_file_to_ome_tif
       title: Convert Single File to ome-tif
@@ -49,6 +51,7 @@ contributions:
     - command: napari-flim-phasor-plotter.get_reader
       accepts_directories: true
       filename_patterns: ['*.ptu', '*.PTU', '*.sdt', '*.SDT', '*.tif', '*.zarr']
+
   sample_data:
     - command: napari-flim-phasor-plotter.load_seminal_receptacle_image
       display_name: Seminal Receptacle (2D Raw FLIM)
@@ -62,6 +65,7 @@ contributions:
     - command: napari-flim-phasor-plotter.load_lifetime_cat_synthetic
       display_name: Lifetime Cat (2D Raw Synthetic FLIM)
       key: lifetime_cat
+
   widgets:
     - command: napari-flim-phasor-plotter.calculate_phasors
       display_name: Calculate Phasors
@@ -83,3 +87,45 @@ contributions:
     - command: napari-flim-phasor-plotter.smooth_cluster_mask
       display_name: Smooth Cluster Mask
       autogenerate: true
+
+  menus:
+    napari/layers/data:
+      - submenu: convert_submenu
+      - submenu: phasor_plot_submenu
+      - submenu: pre_processing_submenu
+      - submenu: post_processing_submenu
+    napari/file/io_utilities:
+      - submenu: convert_submenu
+    napari/layers/visualize:
+      - command: napari-flim-phasor-plotter.open_phasor_plot
+    convert_submenu:
+      - submenu: single_file_submenu
+      - submenu: folder_submenu
+    phasor_plot_submenu:
+      - command: napari-flim-phasor-plotter.calculate_phasors
+    single_file_submenu:
+      - command: napari-flim-phasor-plotter.convert_file_to_ome_tif
+    folder_submenu:
+      - command: napari-flim-phasor-plotter.convert_to_zarr
+      - command: napari-flim-phasor-plotter.convert_folder_to_ome_tif
+    pre_processing_submenu:
+      - command: napari-flim-phasor-plotter.apply_binning
+    post_processing_submenu:
+      - command: napari-flim-phasor-plotter.manual_label_extract
+      - command: napari-flim-phasor-plotter.Split_N_Largest_Cluster_Labels
+      - command: napari-flim-phasor-plotter.smooth_cluster_mask
+
+
+  submenus:
+    - id: convert_submenu
+      label: Convert
+    - id: single_file_submenu
+      label: Single File
+    - id: folder_submenu
+      label: Folder (Stack)
+    - id: phasor_plot_submenu
+      label: Phasors
+    - id: pre_processing_submenu
+      label: Pre-Processing
+    - id: post_processing_submenu
+      label: Post-Processing
