@@ -45,13 +45,13 @@ def format_metadata(flim_metadata, stack_shape, output_axes_order='CTZYX', x_pix
     # Feed user-provided XY pixel sizes if not present in the flim_metadata (metadata from the raw FLIM data file)
     if 'x_pixel_size' not in flim_metadata[0]:
         if x_pixel_size == 0:
-            notifications.show_info('x_pixel_size not found in file metadata, it must be provided manually')
+            notifications.show_info('x_pixel_size not found in file metadata,\nit must be provided manually')
             warnings.warn('x_pixel_size not found in file metadata, it must be provided manually')
             return None, None
         flim_metadata[0]['x_pixel_size'] = x_pixel_size
     if 'y_pixel_size' not in flim_metadata[0]:
         if y_pixel_size == 0:
-            notifications.show_info('y_pixel_size not found in file metadata, it must be provided manually')
+            notifications.show_info('y_pixel_size not found in file metadata,\nit must be provided manually')
             warnings.warn('y_pixel_size not found in file metadata, it must be provided manually')
             return None, None
         flim_metadata[0]['y_pixel_size'] = y_pixel_size
@@ -88,14 +88,13 @@ def format_metadata(flim_metadata, stack_shape, output_axes_order='CTZYX', x_pix
             channel_names = [("Channel " + str(i)) for i in range(stack_shape[output_axes_order.index('C')])]
         else:
             if len(channel_names) != stack_shape[output_axes_order.index('C')]:
-                notifications.show_info(f'Number of channel names must match the number of channels in the data. Number of channels in the data: {stack_shape[output_axes_order.index("C")]}')
+                notifications.show_info(f'Number of channel names must match the number of channels in the data.\nNumber of channels in the data: {stack_shape[output_axes_order.index("C")]}')
                 warnings.warn(f'Number of channel names must match the number of channels in the data. Number of channels in the data: {stack_shape[output_axes_order.index("C")]}')
                 return None, None
         metadata_timelapse['Channel']['Name'] = channel_names
 
     # For the single timepoint metadata, replace the time axis with the photon counts axis
     metadata_single_timepoint = metadata_timelapse.copy() 
-    print(metadata_single_timepoint)
     if 'tcspc_resolution' in flim_metadata[0] and flim_metadata[0]['tcspc_resolution'] is not None:
         metadata_single_timepoint['TimeIncrement'] = flim_metadata[0]['tcspc_resolution'] * 1e12
         metadata_single_timepoint['TimeIncrementUnit'] = 'ps'
