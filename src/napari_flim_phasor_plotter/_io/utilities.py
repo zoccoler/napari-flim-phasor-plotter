@@ -39,6 +39,8 @@ def format_metadata(flim_metadata, stack_shape, output_axes_order='CTZYX', x_pix
     if stack_shape[output_axes_order.index('C')] > 1:
         multichannel = True
 
+    print(f"Multichannel: {multichannel}")
+
     # Build metadata dictionary for timelapsed data
     metadata_timelapse = dict()
     metadata_timelapse['axes'] = output_axes_order
@@ -69,6 +71,9 @@ def format_metadata(flim_metadata, stack_shape, output_axes_order='CTZYX', x_pix
             return None, None
         metadata_timelapse['PhysicalSizeZ'] = z_pixel_size
         metadata_timelapse['PhysicalSizeZUnit'] = pixel_size_unit
+    else:
+        metadata_timelapse['PhysicalSizeZ'] = 1
+        metadata_timelapse['PhysicalSizeZUnit'] = pixel_size_unit
     if timelapse: # If it is a true timelapse (not one having photon counts as the time axis)
         if time_resolution_per_slice == 0:
             notifications.show_info('time_resolution_per_slice must be provided')
@@ -82,6 +87,9 @@ def format_metadata(flim_metadata, stack_shape, output_axes_order='CTZYX', x_pix
             time_resolution = time_resolution_per_slice
         metadata_timelapse['TimeIncrement'] = time_resolution
         metadata_timelapse['TimeIncrementUnit'] = time_unit
+    else:
+        metadata_timelapse['TimeIncrement'] = 1
+        metadata_timelapse['TimeIncrementUnit'] = 's'
     if multichannel:
         metadata_timelapse['Channel'] = dict()
         if channel_names == []:
