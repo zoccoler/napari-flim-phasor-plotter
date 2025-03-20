@@ -165,7 +165,7 @@ def convert_folder_to_ome_tif(folder_path: pathlib.Path,
                     timelapse=timelapse,)
                 if metadata_timelapse is None:
                     return
-            # Populate nuumpy array with data
+            # Populate numpy array with data
             if len(data.shape) == 3:
                 # Consider slice is single channel
                 numpy_array[0, :data.shape[0],
