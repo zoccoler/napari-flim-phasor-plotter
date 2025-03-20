@@ -143,9 +143,10 @@ def read_single_sdt_file(path, *args, **kwargs):
     data = np.moveaxis(np.stack(data_raw), -1, 1)
 
     metadata_per_channel = []
-    for measure_info_recarray in sdt_file.measure_info:
+    for i, measure_info_recarray in enumerate(sdt_file.measure_info):
         metadata = {'measure_info': recarray_to_dict(measure_info_recarray),
                     'file_type': 'sdt'}
+        metadata['tcspc_resolution'] = sdt_file.times[i][1] - sdt_file.times[i][0]
         metadata_per_channel.append(metadata)
     return data, metadata_per_channel
 
