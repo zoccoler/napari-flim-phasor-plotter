@@ -1,7 +1,19 @@
 from napari.utils import notifications
 import warnings
 
-def format_metadata(flim_metadata, stack_shape, output_axes_order='CTZYX', x_pixel_size = 0, y_pixel_size = 0, z_pixel_size = 0, pixel_size_unit = 'm', time_resolution_per_slice = 0, time_unit = 's', channel_names = [], micro_time_resolution = 0, micro_time_unit = 'ps', timelapse=True):
+def format_metadata(flim_metadata, 
+                    stack_shape, 
+                    output_axes_order='CTZYX',
+                    x_pixel_size = 0, 
+                    y_pixel_size = 0, 
+                    z_pixel_size = 0, 
+                    pixel_size_unit = 'm', 
+                    time_resolution_per_slice = 0, 
+                    time_unit = 's', 
+                    channel_names = [], 
+                    micro_time_resolution = 0, 
+                    micro_time_unit = 's', 
+                    timelapse=True):
     """Format metadata for OME-TIFF based on the provided metadata and XML file.
 
     Parameters
@@ -39,8 +51,6 @@ def format_metadata(flim_metadata, stack_shape, output_axes_order='CTZYX', x_pix
     if stack_shape[output_axes_order.index('C')] > 1:
         multichannel = True
 
-    print(f"Multichannel: {multichannel}")
-
     # Build metadata dictionary for timelapsed data
     metadata_timelapse = dict()
     metadata_timelapse['axes'] = output_axes_order
@@ -51,12 +61,37 @@ def format_metadata(flim_metadata, stack_shape, output_axes_order='CTZYX', x_pix
             warnings.warn('x_pixel_size not found in file metadata, it must be provided manually')
             return None, None
         flim_metadata[0]['x_pixel_size'] = x_pixel_size
+    else:
+        # if provided, assume pixel size unit to be m and convert to provided pixel size unit to be consistent along x, y and z
+        if pixel_size_unit == 'pm':
+            flim_metadata[0]['x_pixel_size'] = flim_metadata[0]['x_pixel_size'] * 1e12
+        elif pixel_size_unit == 'nm':
+            flim_metadata[0]['x_pixel_size'] = flim_metadata[0]['x_pixel_size'] * 1e9
+        elif pixel_size_unit == 'um':
+            flim_metadata[0]['x_pixel_size'] = flim_metadata[0]['x_pixel_size'] * 1e6
+        elif pixel_size_unit == 'mm':
+            flim_metadata[0]['x_pixel_size'] = flim_metadata[0]['x_pixel_size'] * 1e3
+        elif pixel_size_unit == 'cm':
+            flim_metadata[0]['x_pixel_size'] = flim_metadata[0]['x_pixel_size'] * 1e2
+
     if 'y_pixel_size' not in flim_metadata[0]:
         if y_pixel_size == 0:
             notifications.show_info('y_pixel_size not found in file metadata,\nit must be provided manually')
             warnings.warn('y_pixel_size not found in file metadata, it must be provided manually')
             return None, None
         flim_metadata[0]['y_pixel_size'] = y_pixel_size
+    else:
+        # if provided, assume pixel size unit to be m and convert to provided pixel size unit to be consistent along x, y and z
+        if pixel_size_unit == 'pm':
+            flim_metadata[0]['y_pixel_size'] = flim_metadata[0]['y_pixel_size'] * 1e12
+        elif pixel_size_unit == 'nm':
+            flim_metadata[0]['y_pixel_size'] = flim_metadata[0]['y_pixel_size'] * 1e9
+        elif pixel_size_unit == 'um':
+            flim_metadata[0]['y_pixel_size'] = flim_metadata[0]['y_pixel_size'] * 1e6
+        elif pixel_size_unit == 'mm':
+            flim_metadata[0]['y_pixel_size'] = flim_metadata[0]['y_pixel_size'] * 1e3
+        elif pixel_size_unit == 'cm':
+            flim_metadata[0]['y_pixel_size'] = flim_metadata[0]['y_pixel_size'] * 1e2
     
     # Fill in x and y pixel sizes metadata for ome-tiff
     metadata_timelapse['PhysicalSizeX'] = flim_metadata[0]['x_pixel_size']
@@ -72,6 +107,7 @@ def format_metadata(flim_metadata, stack_shape, output_axes_order='CTZYX', x_pix
         metadata_timelapse['PhysicalSizeZ'] = z_pixel_size
         metadata_timelapse['PhysicalSizeZUnit'] = pixel_size_unit
     else:
+        # Always provide a z size, even if it is not a stack because output is always be 5D for OME-TIFF
         metadata_timelapse['PhysicalSizeZ'] = 1
         metadata_timelapse['PhysicalSizeZUnit'] = pixel_size_unit
     if timelapse: # If it is a true timelapse (not one having photon counts as the time axis)
@@ -88,6 +124,7 @@ def format_metadata(flim_metadata, stack_shape, output_axes_order='CTZYX', x_pix
         metadata_timelapse['TimeIncrement'] = time_resolution
         metadata_timelapse['TimeIncrementUnit'] = time_unit
     else:
+        # Always provide a time increment, even if it is not a timelapse because output is always be 5D for OME-TIFF
         metadata_timelapse['TimeIncrement'] = 1
         metadata_timelapse['TimeIncrementUnit'] = 's'
     if multichannel:
@@ -104,8 +141,8 @@ def format_metadata(flim_metadata, stack_shape, output_axes_order='CTZYX', x_pix
     # For the single timepoint metadata, replace the time axis with the photon counts axis
     metadata_single_timepoint = metadata_timelapse.copy() 
     if 'tcspc_resolution' in flim_metadata[0] and flim_metadata[0]['tcspc_resolution'] is not None:
-        metadata_single_timepoint['TimeIncrement'] = flim_metadata[0]['tcspc_resolution'] * 1e12
-        metadata_single_timepoint['TimeIncrementUnit'] = 'ps'
+        metadata_single_timepoint['TimeIncrement'] = flim_metadata[0]['tcspc_resolution']
+        metadata_single_timepoint['TimeIncrementUnit'] = 's'
     else:
         if micro_time_resolution == 0:
             notifications.show_info('micro_time_resolution must be provided')
@@ -113,5 +150,4 @@ def format_metadata(flim_metadata, stack_shape, output_axes_order='CTZYX', x_pix
             return None, None
         metadata_single_timepoint['TimeIncrement'] = micro_time_resolution
         metadata_single_timepoint['TimeIncrementUnit'] = micro_time_unit
-
     return metadata_timelapse, metadata_single_timepoint
