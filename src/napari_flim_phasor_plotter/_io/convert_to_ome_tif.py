@@ -9,20 +9,20 @@ from magicgui.tqdm import tqdm
                             'mode': 'd'},
                 x_pixel_size={'widget_type': 'FloatSpinBox',
                             'label': 'X Pixel Size',
-                            'step': 0.1, 'min': 0},
+                            'step': 0.001, 'min': 0},
                 y_pixel_size={'widget_type': 'FloatSpinBox',
                             'label': 'Y Pixel Size',
-                            'step': 0.1, 'min': 0},
+                            'step': 0.001, 'min': 0},
                 z_pixel_size={'widget_type': 'FloatSpinBox',
                             'label': 'Z Pixel Size',
-                            'step': 0.1, 'min': 0},
+                            'step': 0.001, 'min': 0},
                 pixel_size_unit={'widget_type': 'ComboBox',
                             'label': 'Pixel Size Unit',
                             'choices': ['pm', 'nm', 'um', 'mm', 'cm', 'm']},
                 time_resolution_per_slice={'widget_type': 'FloatSpinBox',
                             'label': 'Time Resolution per Slice',
                             'tooltip': 'Time resolution per image or z-slice if 3D stack (not time for whole z-stack)',
-                            'step': 0.1, 'min': 0},
+                            'step': 0.001, 'min': 0},
                 time_unit={'widget_type': 'ComboBox',
                             'label': 'Time Unit',
                             'choices': ['fs', 'ps', 'ns', 'us', 'ms', 's']},
@@ -32,53 +32,51 @@ from magicgui.tqdm import tqdm
                 micro_time_resolution={'widget_type': 'FloatSpinBox',
                             'label': 'FLIM Time Resolution',
                             'tooltip': 'Time resolution for the TCSPC histogram',
-                            'step': 0.1, 'min': 0},
+                            'step': 0.001, 'min': 0},
                 micro_time_unit={'widget_type': 'ComboBox',
                             'label': 'FLIM Time Unit',
-                            'choices': ['fs', 'ps', 'ns', 'µs', 'ms', 's']},                           
+                            'choices': ['fs', 'ps', 'ns', 'us', 'ms', 's']},                           
                cancel_button={'widget_type': 'PushButton',
                               'visible': False,
                               'text': 'Cancel', })
 def convert_folder_to_ome_tif(folder_path: pathlib.Path, 
-                                x_pixel_size: float = None,
-                                y_pixel_size: float = None,
-                                z_pixel_size: float = None,
+                                x_pixel_size: float = 0,
+                                y_pixel_size: float = 0,
+                                z_pixel_size: float = 0,
                                 pixel_size_unit: str = 'um',
-                                time_resolution_per_slice: float = None,
+                                time_resolution_per_slice: float = 0,
                                 time_unit: str = 's',
                                 channel_names: str = '',
-                                micro_time_resolution: float = None,
+                                micro_time_resolution: float = 0,
                                 micro_time_unit: str = 'ps',
                               cancel_button: bool = False):
-    """ Convert a file or folder of FLIM images to a OME-TIFF file per timepoint (if timelapse) plus a OME-TIFF file with summed intensity.
+    """ Convert a folder of FLIM images representing an image stack to a OME-TIFF file per timepoint (if timelapse) plus a OME-TIFF file with summed intensity (no FLIM).
 
     The folder must contain only FLIM images of the same type (e.g. all .ptu files or all .sdt files).
-    The file names must be in the format: "name_t000_z000" where "t000" is the time point and "z000" is the z slice.
+    The file names must be in the format: "name_t000_z000", or "name_z000", or name_"t000", where "t000" is the time point and "z000" is the z slice.
     The z slice and time point must be the last two numbers in the file
     name. The z slice and time point must be separated by an underscore.
-    If a single file is provided, the plugin will generate a single OME-TIFF file.
-    If a folder is provided, the plugin will generate a OME-TIFF file per timepoint (if timelapse) plus a OME-TIFF file with summed intensity.
 
     Parameters
     ----------
     folder_path : str
         Path to the folder containing the FLIM images.
     x_pixel_size : float, optional
-        Pixel size along the x-axis, by default None.
+        Pixel size along the x-axis, by default 0.
     y_pixel_size : float, optional
-        Pixel size along the y-axis, by default None.
+        Pixel size along the y-axis, by default 0.
     z_pixel_size : float, optional
-        Pixel size along the z-axis, by default None.
+        Pixel size along the z-axis, by default 0.
     pixel_size_unit : str, optional
         Unit of the pixel size, by default 'um'.
     time_resolution_per_slice : float, optional
-        Time resolution per slice, by default None.
+        Time resolution per slice, by default 0.
     time_unit : str, optional
         Unit of the time resolution, by default 's'.
-    channel_names : List[str], optional
-        Names of the channels, by default [].
+    channel_names : str, optional
+        Names of the channels, separated by comma, by default ''.
     micro_time_resolution : float, optional
-        Time resolution for the TCSPC histogram, by default None.
+        Time resolution for the TCSPC histogram, by default 0.
     micro_time_unit : str, optional
         Unit of the time resolution for the TCSPC histogram, by default 'ps'.
     
@@ -105,6 +103,13 @@ def convert_folder_to_ome_tif(folder_path: pathlib.Path,
                 file_extension + ' . Supported file extensions are: '
             message += ', '.join(ALLOWED_FILE_EXTENSION[:-1])
             print(message)
+
+    if pixel_size_unit == 'um':
+        pixel_size_unit = 'µm'
+    if micro_time_unit == 'us':
+        micro_time_unit = 'µs'
+    if time_unit == 'us':
+        time_unit = 'µs'
 
     if channel_names == '':
         channel_names = []
@@ -205,16 +210,13 @@ def convert_folder_to_ome_tif(folder_path: pathlib.Path,
     notifications.show_info(f'Conversion to OME-TIFF completed.\nOME-TIFFs saved in\n{output_path}')
 
 @magic_factory(call_button='Convert', layout="vertical",
-            folder_path={'widget_type': 'FileEdit',
+            file_path={'widget_type': 'FileEdit',
                         'mode': 'r'},
             x_pixel_size={'widget_type': 'FloatSpinBox',
                         'label': 'X Pixel Size',
                         'step': 0.001, 'min': 0},
             y_pixel_size={'widget_type': 'FloatSpinBox',
                         'label': 'Y Pixel Size',
-                        'step': 0.001, 'min': 0},
-            z_pixel_size={'widget_type': 'FloatSpinBox',
-                        'label': 'Z Pixel Size',
                         'step': 0.001, 'min': 0},
             pixel_size_unit={'widget_type': 'ComboBox',
                         'label': 'Pixel Size Unit',
@@ -235,50 +237,38 @@ def convert_folder_to_ome_tif(folder_path: pathlib.Path,
                         'step': 0.001, 'min': 0},
             micro_time_unit={'widget_type': 'ComboBox',
                         'label': 'FLIM Time Unit',
-                        'choices': ['fs', 'ps', 'ns', 'µs', 'ms', 's']},                           
+                        'choices': ['fs', 'ps', 'ns', 'us', 'ms', 's']},                           
             cancel_button={'widget_type': 'PushButton',
                             'visible': False,
                             'text': 'Cancel', })
-def convert_file_to_ome_tif(folder_path: pathlib.Path, 
-                                x_pixel_size: float = None,
-                                y_pixel_size: float = None,
-                                z_pixel_size: float = None,
+def convert_file_to_ome_tif(file_path: pathlib.Path, 
+                                x_pixel_size: float = 0,
+                                y_pixel_size: float = 0,
                                 pixel_size_unit: str = 'um',
-                                time_resolution_per_slice: float = None,
-                                time_unit: str = 's',
                                 channel_names: str = '',
-                                micro_time_resolution: float = None,
+                                micro_time_resolution: float = 0,
                                 micro_time_unit: str = 'ps',
                               cancel_button: bool = False):
-    """ Convert a file or folder of FLIM images to a OME-TIFF file per timepoint (if timelapse) plus a OME-TIFF file with summed intensity.
+    """ Convert a file to a OME-TIFF file.
 
-    The folder must contain only FLIM images of the same type (e.g. all .ptu files or all .sdt files).
-    The file names must be in the format: "name_t000_z000" where "t000" is the time point and "z000" is the z slice.
-    The z slice and time point must be the last two numbers in the file
-    name. The z slice and time point must be separated by an underscore.
-    If a single file is provided, the plugin will generate a single OME-TIFF file.
-    If a folder is provided, the plugin will generate a OME-TIFF file per timepoint (if timelapse) plus a OME-TIFF file with summed intensity.
+    The file must be a FLIM image of the same type (e.g. .ptu or .sdt).
+    The plugin will generate a single OME-TIFF file, replacing the time axis ('T') with the photon counts axis.
+    If the file contains multiple timepoints, the plugin will take the first timepoint.
 
     Parameters
     ----------
-    folder_path : str
+    file_path : str
         Path to the folder containing the FLIM images.
     x_pixel_size : float, optional
-        Pixel size along the x-axis, by default None.
+        Pixel size along the x-axis, by default 0.
     y_pixel_size : float, optional
-        Pixel size along the y-axis, by default None.
-    z_pixel_size : float, optional
-        Pixel size along the z-axis, by default None.
+        Pixel size along the y-axis, by default 0.
     pixel_size_unit : str, optional
         Unit of the pixel size, by default 'um'.
-    time_resolution_per_slice : float, optional
-        Time resolution per slice, by default None.
-    time_unit : str, optional
-        Unit of the time resolution, by default 's'.
     channel_names : List[str], optional
         Names of the channels, by default [].
     micro_time_resolution : float, optional
-        Time resolution for the TCSPC histogram, by default None.
+        Time resolution for the TCSPC histogram, by default 0.
     micro_time_unit : str, optional
         Unit of the time resolution for the TCSPC histogram, by default 'ps'.
     
@@ -289,13 +279,12 @@ def convert_file_to_ome_tif(folder_path: pathlib.Path,
     import numpy as np
     from natsort import natsorted
     from napari_flim_phasor_plotter._reader import get_read_function_from_extension, get_most_frequent_file_extension
-    from napari_flim_phasor_plotter._reader import get_max_slice_shape_and_dtype, get_structured_list_of_paths
-    from napari_flim_phasor_plotter._reader import get_max_zslices, get_max_time_points, ALLOWED_FILE_EXTENSION
+    from napari_flim_phasor_plotter._reader import ALLOWED_FILE_EXTENSION
     from napari_flim_phasor_plotter._io.utilities import format_metadata
     import tifffile
 
-    folder_path = pathlib.Path(folder_path)
-    file_extension = get_most_frequent_file_extension(folder_path)
+    file_path = pathlib.Path(file_path)
+    file_extension = get_most_frequent_file_extension(file_path)
     if file_extension not in ALLOWED_FILE_EXTENSION:
         if file_extension == '':
             message = 'Please select a folder containing FLIM images.'
@@ -306,6 +295,11 @@ def convert_file_to_ome_tif(folder_path: pathlib.Path,
             message += ', '.join(ALLOWED_FILE_EXTENSION[:-1])
             print(message)
 
+    if pixel_size_unit == 'um':
+        pixel_size_unit = 'µm'
+    if micro_time_unit == 'us':
+        micro_time_unit = 'µs'
+
     if channel_names == '':
         channel_names = []
     else:
@@ -314,7 +308,7 @@ def convert_file_to_ome_tif(folder_path: pathlib.Path,
     # Get appropriate read function from file extension
     imread = get_read_function_from_extension[file_extension]
     print('Single file')
-    data, flim_metadata = imread(folder_path)
+    data, flim_metadata = imread(file_path)
     # Add channel dimension in case it is missing
     if len(data.shape) == 3:
         data = data[np.newaxis, :]
@@ -325,10 +319,7 @@ def convert_file_to_ome_tif(folder_path: pathlib.Path,
         stack_shape=data.shape,
         x_pixel_size=x_pixel_size,
         y_pixel_size=y_pixel_size,
-        z_pixel_size=z_pixel_size,
         pixel_size_unit=pixel_size_unit,
-        time_resolution_per_slice=time_resolution_per_slice,
-        time_unit=time_unit,
         channel_names=channel_names,
         micro_time_resolution=micro_time_resolution,
         micro_time_unit=micro_time_unit,
@@ -336,9 +327,9 @@ def convert_file_to_ome_tif(folder_path: pathlib.Path,
     if metadata_timelapse is None:
         return
     print(f"Saving OME-TIF...")
-    output_path = folder_path.parent / 'OME-TIFs'
+    output_path = file_path.parent / 'OME-TIFs'
     output_path.mkdir(exist_ok=True)
-    output_file_name = folder_path.stem + '.ome.tif'
+    output_file_name = file_path.stem + '.ome.tif'
     with tifffile.TiffWriter(output_path / output_file_name, ome=True) as tif:
         tif.write(data, metadata=metadata_single_timepoint, compression='zlib')
     print('Done')
