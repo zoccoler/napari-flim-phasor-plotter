@@ -209,7 +209,87 @@ def convert_folder_to_ome_tif(folder_path: pathlib.Path,
     print('Done')
     notifications.show_info(f'Conversion to OME-TIFF completed.\nOME-TIFFs saved in\n{output_path}')
 
-@magic_factory(call_button='Convert', layout="vertical",
+def get_resolutions_from_single_file(file_path):
+    """Get the pixel size along the x and y axes and the time resolution for the TCSPC histogram from a single file.
+
+    Parameters
+    ----------
+    file_path : str
+        Path to the file.
+
+    Returns
+    -------
+    x_pixel_size : float
+        Pixel size along the x-axis.
+    y_pixel_size : float
+        Pixel size along the y-axis.
+    tcspc_resolution : float
+        Time resolution for the TCSPC histogram.
+    """
+    from napari_flim_phasor_plotter._reader import get_read_function_from_extension
+    from napari_flim_phasor_plotter._reader import get_most_frequent_file_extension, ALLOWED_FILE_EXTENSION
+    file_path = pathlib.Path(file_path)
+    file_extension = get_most_frequent_file_extension(file_path)
+    if file_extension not in ALLOWED_FILE_EXTENSION:
+        if file_extension == '':
+            message = ('Please select a folder containing FLIM images.\n',
+                       'Accepted file extensions are: ' + ', '.join(ALLOWED_FILE_EXTENSION[:-1]))
+            print(message)
+        else:
+            message = 'Plugin does not support ' + \
+                file_extension + ' . Supported file extensions are: '
+            message += ', '.join(ALLOWED_FILE_EXTENSION[:-1])
+            print(message)
+    x_pixel_size = 0
+    y_pixel_size = 0
+    tcspc_resolution = 0
+    # Get appropriate read function from file extension
+    if file_extension == '.ptu':
+        from ptufile import PtuFile
+        ptu = PtuFile(file_path)
+        x_pixel_size = ptu.coords['X'][1]
+        y_pixel_size = ptu.coords['Y'][1]
+        tcspc_resolution = ptu.tcspc_resolution
+    elif file_extension == '.sdt':
+        from sdtfile import SdtFile
+        sdt = SdtFile(file_path)
+        tcspc_resolution = sdt.times[0][1] - sdt.times[0][0]
+    return x_pixel_size, y_pixel_size, tcspc_resolution
+
+def connect_events_file(widget):
+    '''
+    Connect widget events to make some visible/invisible depending on others
+    '''
+    default_widget_bg_color = "background-color: #414851"
+    missing_value_widget_bg_color = "background-color: #641818"
+    def format_other_widgets(value):
+        print(f"Text changed: {value}")
+        x_pixel_size, y_pixel_size, tcspc_resolution = get_resolutions_from_single_file(value)
+        
+        if x_pixel_size == 0:
+            widget.x_pixel_size.native.setStyleSheet(missing_value_widget_bg_color)
+        else:
+            widget.x_pixel_size.value = x_pixel_size * 1e6 # Convert to um, assuming x_pixel_size is in m
+            widget.pixel_size_unit.value = 'um'
+            widget.x_pixel_size.native.setStyleSheet(default_widget_bg_color)
+        if y_pixel_size == 0:
+            widget.y_pixel_size.native.setStyleSheet(missing_value_widget_bg_color)
+        else:
+            widget.y_pixel_size.value = y_pixel_size * 1e6
+            widget.pixel_size_unit.value = 'um'
+            widget.y_pixel_size.native.setStyleSheet(default_widget_bg_color)
+        if tcspc_resolution == 0:
+            widget.micro_time_resolution.native.setStyleSheet(missing_value_widget_bg_color)
+        else:
+            widget.micro_time_resolution.value = tcspc_resolution * 1e12 # Convert to ps, assuming tcspc_resolution is in s
+            widget.micro_time_unit.value = 'ps'
+            widget.micro_time_resolution.native.setStyleSheet(default_widget_bg_color)
+    # Connect events
+    widget.file_path.changed.connect(format_other_widgets)
+
+
+@magic_factory(widget_init=connect_events_file,
+               call_button='Convert', layout="vertical",
             file_path={'widget_type': 'FileEdit',
                         'mode': 'r'},
             x_pixel_size={'widget_type': 'FloatSpinBox',
@@ -221,13 +301,6 @@ def convert_folder_to_ome_tif(folder_path: pathlib.Path,
             pixel_size_unit={'widget_type': 'ComboBox',
                         'label': 'Pixel Size Unit',
                         'choices': ['pm', 'nm', 'um', 'mm', 'cm', 'm']},
-            time_resolution_per_slice={'widget_type': 'FloatSpinBox',
-                        'label': 'Time Resolution per Slice',
-                        'tooltip': 'Time resolution per image or z-slice if 3D stack (not time for whole z-stack)',
-                        'step': 0.001, 'min': 0},
-            time_unit={'widget_type': 'ComboBox',
-                        'label': 'Time Unit',
-                        'choices': ['fs', 'ps', 'ns', 'us', 'ms', 's']},
             channel_names={'widget_type': 'LineEdit',
                         'label': 'Channel Names',
                         'tooltip': 'Comma separated channel names'},
