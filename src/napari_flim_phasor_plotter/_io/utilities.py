@@ -1,6 +1,25 @@
 from napari.utils import notifications
 import warnings
 
+def get_valid_file_extension(path):
+    from napari_flim_phasor_plotter._reader import get_most_frequent_file_extension, ALLOWED_FILE_EXTENSION
+    from pathlib import Path
+    path = Path(path)
+    file_extension = get_most_frequent_file_extension(path)
+    if file_extension not in ALLOWED_FILE_EXTENSION:
+        if file_extension == '':
+            message = ('Please select a folder containing FLIM images.\n',
+                       'Accepted file extensions are: ' + ', '.join(ALLOWED_FILE_EXTENSION[:-1]))
+            notifications.show_error(message)
+            return None
+        else:
+            message = 'Plugin does not support ' + \
+                file_extension + ' .\nSupported file extensions are: '
+            message += ', '.join(ALLOWED_FILE_EXTENSION[:-1])
+            notifications.show_error(message)
+            return None
+    return file_extension
+
 def format_metadata(flim_metadata, 
                     stack_shape, 
                     output_axes_order='CTZYX',
@@ -57,8 +76,7 @@ def format_metadata(flim_metadata,
     # Feed user-provided XY pixel sizes if not present in the flim_metadata (metadata from the raw FLIM data file)
     if 'x_pixel_size' not in flim_metadata[0]:
         if x_pixel_size == 0:
-            notifications.show_info('x_pixel_size not found in file metadata,\nit must be provided manually')
-            warnings.warn('x_pixel_size not found in file metadata, it must be provided manually')
+            notifications.show_warning('x_pixel_size not found in file metadata,\nit must be provided manually')
             return None, None
         flim_metadata[0]['x_pixel_size'] = x_pixel_size
     else:
@@ -76,8 +94,7 @@ def format_metadata(flim_metadata,
 
     if 'y_pixel_size' not in flim_metadata[0]:
         if y_pixel_size == 0:
-            notifications.show_info('y_pixel_size not found in file metadata,\nit must be provided manually')
-            warnings.warn('y_pixel_size not found in file metadata, it must be provided manually')
+            notifications.show_warning('y_pixel_size not found in file metadata,\nit must be provided manually')
             return None, None
         flim_metadata[0]['y_pixel_size'] = y_pixel_size
     else:
@@ -101,8 +118,7 @@ def format_metadata(flim_metadata,
     # Fill in z pixel size metadata for ome-tiff
     if z_stack:
         if z_pixel_size == 0:
-            notifications.show_info('z_pixel_size must be provided manually')
-            warnings.warn('z_pixel_size must be provided manually')
+            notifications.show_warning('z_pixel_size must be provided manually')
             return None, None
         metadata_timelapse['PhysicalSizeZ'] = z_pixel_size
         metadata_timelapse['PhysicalSizeZUnit'] = pixel_size_unit
@@ -112,8 +128,7 @@ def format_metadata(flim_metadata,
         metadata_timelapse['PhysicalSizeZUnit'] = pixel_size_unit
     if timelapse: # If it is a true timelapse (not one having photon counts as the time axis)
         if time_resolution_per_slice == 0:
-            notifications.show_info('time_resolution_per_slice must be provided')
-            warnings.warn('time_resolution_per_slice must be provided')
+            notifications.show_warning('time_resolution_per_slice must be provided')
             return None, None
         if z_stack:
             # Time resolution is the time resolution per slice multiplied by the number of z-slices
@@ -133,8 +148,7 @@ def format_metadata(flim_metadata,
             channel_names = [("Channel " + str(i)) for i in range(stack_shape[output_axes_order.index('C')])]
         else:
             if len(channel_names) != stack_shape[output_axes_order.index('C')]:
-                notifications.show_info(f'Number of channel names must match the number of channels in the data.\nNumber of channels in the data: {stack_shape[output_axes_order.index("C")]}')
-                warnings.warn(f'Number of channel names must match the number of channels in the data. Number of channels in the data: {stack_shape[output_axes_order.index("C")]}')
+                notifications.show_warning(f'Number of channel names must match the number of channels in the data.\nNumber of channels in the data: {stack_shape[output_axes_order.index("C")]}')
                 return None, None
         metadata_timelapse['Channel']['Name'] = channel_names
 
@@ -145,8 +159,7 @@ def format_metadata(flim_metadata,
         metadata_single_timepoint['TimeIncrementUnit'] = 's'
     else:
         if micro_time_resolution == 0:
-            notifications.show_info('micro_time_resolution must be provided')
-            warnings.warn('micro_time_resolution must be provided')
+            notifications.show_warning('micro_time_resolution must be provided')
             return None, None
         metadata_single_timepoint['TimeIncrement'] = micro_time_resolution
         metadata_single_timepoint['TimeIncrementUnit'] = micro_time_unit
