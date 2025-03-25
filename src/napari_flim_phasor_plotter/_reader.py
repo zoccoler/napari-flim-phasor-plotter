@@ -101,8 +101,10 @@ def read_single_ptu_file(path, *args, **kwargs):
         t_pos = ptu_dims.index('T')
         n_frames = ptu.shape[t_pos]
         if n_frames > 1:
-            warn("Timelapse found in single ptu file. This function is for single frame PTU files only. Returning first frame.\nUse read_single_ptu_file_2d_timelapse() for timelapse PTU files.")
+            warn("Multiple 'time points' found in single ptu file. Assuming repeated laser scans. Returning first frame.\nUse read_single_ptu_file_2d_timelapse() for true timelapse PTU files.")
         # read single frame from axis where time is present
+        # average over time axis
+            # data = np.mean(ptu[:], axis=t_pos)
         data = np.take(ptu[:], 0, axis=t_pos)
         ptu_dims.pop(t_pos)  
     else:
@@ -232,6 +234,42 @@ def read_single_tif_file(path, channel_axis=0, ut_axis=1, timelapse=False, viewe
         metadata_per_channel.append(metadata)
     return data, metadata_per_channel
 
+
+def get_resolutions_from_single_file(file_path, file_extension):
+    """Get the pixel size along the x and y axes and the time resolution for the TCSPC histogram from a single file.
+
+    Parameters
+    ----------
+    file_path : str
+        Path to the file.
+
+    Returns
+    -------
+    x_pixel_size : float
+        Pixel size along the x-axis.
+    y_pixel_size : float
+        Pixel size along the y-axis.
+    tcspc_resolution : float
+        Time resolution for the TCSPC histogram.
+    """
+    x_pixel_size = 0
+    y_pixel_size = 0
+    tcspc_resolution = 0
+    number_channels = 0
+    # Get appropriate read function from file extension
+    if file_extension == '.ptu':
+        from ptufile import PtuFile
+        ptu = PtuFile(file_path)
+        x_pixel_size = ptu.coords['X'][1]
+        y_pixel_size = ptu.coords['Y'][1]
+        tcspc_resolution = ptu.tcspc_resolution
+        number_of_channels = ptu.number_channels
+    elif file_extension == '.sdt':
+        from sdtfile import SdtFile
+        sdt = SdtFile(file_path)
+        tcspc_resolution = sdt.times[0][1] - sdt.times[0][0]
+        number_channels = len(sdt.measure_info)
+    return x_pixel_size, y_pixel_size, tcspc_resolution, number_channels
 
 # Dictionary relating file extension to compatible reading function
 get_read_function_from_extension = {
