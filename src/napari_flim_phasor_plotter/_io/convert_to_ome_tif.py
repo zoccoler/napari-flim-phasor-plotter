@@ -4,7 +4,109 @@ from napari.utils import notifications
 
 from magicgui.tqdm import tqdm
 
-@magic_factory(call_button='Convert', layout="vertical",
+def connect_events_stack(widget):
+    default_widget_bg_color = "background-color: #414851"
+    missing_value_widget_bg_color = "background-color: #641818"
+    def format_other_widgets(value):
+        """
+        Format other widgets based on the folder path
+        """
+        from napari_flim_phasor_plotter._reader import get_max_zslices, get_max_time_points
+        from napari_flim_phasor_plotter._reader import get_resolutions_from_single_file
+        from napari_flim_phasor_plotter._io.utilities import get_valid_file_extension
+        from natsort import natsorted
+        # Reset z and t widgets background color
+        widget.z_pixel_size.native.setStyleSheet(default_widget_bg_color)
+        widget.time_resolution_per_slice.native.setStyleSheet(default_widget_bg_color)
+        # Check if path leads to valid folder
+        folder_path = pathlib.Path(value)
+        file_extension = get_valid_file_extension(folder_path)
+        if file_extension is None:
+            widget.folder_path.native.setStyleSheet(missing_value_widget_bg_color)
+            return
+        else:
+            widget.folder_path.native.setStyleSheet(default_widget_bg_color)
+        # Check what kind of stack is in folder based on file names (z-stack, timelapse or both)
+        file_paths = natsorted([file_path for file_path in folder_path.iterdir(
+        ) if file_path.suffix == file_extension])
+
+        max_z = get_max_zslices(file_paths, file_extension)
+        max_time_point = get_max_time_points(file_paths, file_extension)
+        # Hide z and t widgets if no z or t
+        if max_z == 0:
+            widget.z_pixel_size.visible = False
+        else:
+            # Otherwise, show z widget with missing value background color
+            widget.z_pixel_size.value = 0
+            widget.z_pixel_size.visible = True
+            widget.z_pixel_size.native.setStyleSheet(missing_value_widget_bg_color)
+        if max_time_point == 0:
+            widget.time_resolution_per_slice.visible = False
+            widget.time_unit.visible = False
+        else:
+            widget.time_resolution_per_slice.value = 0
+            widget.time_resolution_per_slice.visible = True
+            widget.time_unit.visible = True
+            widget.time_resolution_per_slice.native.setStyleSheet(missing_value_widget_bg_color)
+
+        x_pixel_size, y_pixel_size, tcspc_resolution, number_channels = get_resolutions_from_single_file(file_paths[0], file_extension)
+        if x_pixel_size == 0:
+            widget.x_pixel_size.value = 0
+            widget.x_pixel_size.native.setStyleSheet(missing_value_widget_bg_color)
+        else:
+            widget.x_pixel_size.value = x_pixel_size * 1e6 # Convert to um, assuming x_pixel_size is in m
+            widget.pixel_size_unit.value = 'um'
+            widget.x_pixel_size.native.setStyleSheet(default_widget_bg_color)
+        if y_pixel_size == 0:
+            widget.y_pixel_size.value = 0
+            widget.y_pixel_size.native.setStyleSheet(missing_value_widget_bg_color)
+        else:
+            widget.y_pixel_size.value = y_pixel_size * 1e6
+            widget.pixel_size_unit.value = 'um'
+            widget.y_pixel_size.native.setStyleSheet(default_widget_bg_color)
+        if tcspc_resolution == 0:
+            widget.micro_time_resolution.value = 0
+            widget.micro_time_resolution.native.setStyleSheet(missing_value_widget_bg_color)
+        else:
+            widget.micro_time_resolution.value = tcspc_resolution * 1e12 # Convert to ps, assuming tcspc_resolution is in s
+            widget.micro_time_unit.value = 'ps'
+            widget.micro_time_resolution.native.setStyleSheet(default_widget_bg_color)
+
+    def change_x_bg_color(value):
+        if value == 0:
+            widget.x_pixel_size.native.setStyleSheet(missing_value_widget_bg_color)
+        else:
+            widget.x_pixel_size.native.setStyleSheet(default_widget_bg_color)
+    def change_y_bg_color(value):
+        if value == 0:
+            widget.y_pixel_size.native.setStyleSheet(missing_value_widget_bg_color)
+        else:
+            widget.y_pixel_size.native.setStyleSheet(default_widget_bg_color)
+    def change_z_bg_color(value):
+        if value == 0:
+            widget.z_pixel_size.native.setStyleSheet(missing_value_widget_bg_color)
+        else:
+            widget.z_pixel_size.native.setStyleSheet(default_widget_bg_color)
+    def change_time_bg_color(value):
+        if value == 0:
+            widget.time_resolution_per_slice.native.setStyleSheet(missing_value_widget_bg_color)
+        else:
+            widget.time_resolution_per_slice.native.setStyleSheet(default_widget_bg_color)
+    def change_micro_time_bg_color(value):
+        if value == 0:
+            widget.micro_time_resolution.native.setStyleSheet(missing_value_widget_bg_color)
+        else:
+            widget.micro_time_resolution.native.setStyleSheet(default_widget_bg_color)
+    # Connect events
+    widget.folder_path.changed.connect(format_other_widgets)
+    widget.x_pixel_size.changed.connect(change_x_bg_color)
+    widget.y_pixel_size.changed.connect(change_y_bg_color)
+    widget.z_pixel_size.changed.connect(change_z_bg_color)
+    widget.time_resolution_per_slice.changed.connect(change_time_bg_color)
+    widget.micro_time_resolution.changed.connect(change_micro_time_bg_color)
+
+@magic_factory(widget_init=connect_events_stack,
+               call_button='Convert', layout="vertical",
                folder_path={'widget_type': 'FileEdit',
                             'mode': 'd'},
                 x_pixel_size={'widget_type': 'FloatSpinBox',
@@ -21,7 +123,7 @@ from magicgui.tqdm import tqdm
                             'choices': ['pm', 'nm', 'um', 'mm', 'cm', 'm']},
                 time_resolution_per_slice={'widget_type': 'FloatSpinBox',
                             'label': 'Time Resolution per Slice',
-                            'tooltip': 'Time resolution per image or z-slice if 3D stack (not time for whole z-stack)',
+                            'tooltip': 'Time resolution per z-slice (not time for whole z-stack)',
                             'step': 0.001, 'min': 0},
                 time_unit={'widget_type': 'ComboBox',
                             'label': 'Time Unit',
@@ -86,23 +188,16 @@ def convert_folder_to_ome_tif(folder_path: pathlib.Path,
     """
     import numpy as np
     from natsort import natsorted
-    from napari_flim_phasor_plotter._reader import get_read_function_from_extension, get_most_frequent_file_extension
+    from napari_flim_phasor_plotter._reader import get_read_function_from_extension
     from napari_flim_phasor_plotter._reader import get_max_slice_shape_and_dtype, get_structured_list_of_paths
-    from napari_flim_phasor_plotter._reader import get_max_zslices, get_max_time_points, ALLOWED_FILE_EXTENSION
-    from napari_flim_phasor_plotter._io.utilities import format_metadata
+    from napari_flim_phasor_plotter._reader import get_max_zslices, get_max_time_points
+    from napari_flim_phasor_plotter._io.utilities import format_metadata, get_valid_file_extension
     import tifffile
 
     folder_path = pathlib.Path(folder_path)
-    file_extension = get_most_frequent_file_extension(folder_path)
-    if file_extension not in ALLOWED_FILE_EXTENSION:
-        if file_extension == '':
-            message = 'Please select a folder containing FLIM images.'
-            print(message)
-        else:
-            message = 'Plugin does not support ' + \
-                file_extension + ' . Supported file extensions are: '
-            message += ', '.join(ALLOWED_FILE_EXTENSION[:-1])
-            print(message)
+    file_extension = get_valid_file_extension(folder_path)
+    if file_extension is None:
+        return
 
     if pixel_size_unit == 'um':
         pixel_size_unit = 'µm'
@@ -124,6 +219,19 @@ def convert_folder_to_ome_tif(folder_path: pathlib.Path,
     # Get all file path with specified file extension
     file_paths = natsorted([file_path for file_path in folder_path.iterdir(
     ) if file_path.suffix == file_extension])
+    # If x or y pixel size is missing, or micro_time_resolution is missing, return
+    if x_pixel_size == 0 or y_pixel_size == 0 or micro_time_resolution == 0:
+        notifications.show_warning('Please provide x, y pixel size and micro time resolution')
+        return
+    # If z-stack, but no z pixel size, return
+    if z_pixel_size == 0 and get_max_zslices(file_paths, file_extension) > 0:
+        notifications.show_warning('Please provide z pixel size')
+        return
+    # If timelapse, but no time resolution, return
+    if time_resolution_per_slice == 0 and get_max_time_points(file_paths, file_extension) > 0:
+        notifications.show_warning('Please provide time resolution per slice')
+        return
+
     # Get maximum shape and dtype from file names (file names must be in the format: "name_t000_z000")
     image_slice_shape, image_dtype = get_max_slice_shape_and_dtype(
         file_paths, file_extension)
@@ -209,62 +317,27 @@ def convert_folder_to_ome_tif(folder_path: pathlib.Path,
     print('Done')
     notifications.show_info(f'Conversion to OME-TIFF completed.\nOME-TIFFs saved in\n{output_path}')
 
-def get_resolutions_from_single_file(file_path):
-    """Get the pixel size along the x and y axes and the time resolution for the TCSPC histogram from a single file.
 
-    Parameters
-    ----------
-    file_path : str
-        Path to the file.
 
-    Returns
-    -------
-    x_pixel_size : float
-        Pixel size along the x-axis.
-    y_pixel_size : float
-        Pixel size along the y-axis.
-    tcspc_resolution : float
-        Time resolution for the TCSPC histogram.
-    """
-    from napari_flim_phasor_plotter._reader import get_read_function_from_extension
-    from napari_flim_phasor_plotter._reader import get_most_frequent_file_extension, ALLOWED_FILE_EXTENSION
-    file_path = pathlib.Path(file_path)
-    file_extension = get_most_frequent_file_extension(file_path)
-    if file_extension not in ALLOWED_FILE_EXTENSION:
-        if file_extension == '':
-            message = ('Please select a folder containing FLIM images.\n',
-                       'Accepted file extensions are: ' + ', '.join(ALLOWED_FILE_EXTENSION[:-1]))
-            print(message)
-        else:
-            message = 'Plugin does not support ' + \
-                file_extension + ' . Supported file extensions are: '
-            message += ', '.join(ALLOWED_FILE_EXTENSION[:-1])
-            print(message)
-    x_pixel_size = 0
-    y_pixel_size = 0
-    tcspc_resolution = 0
-    # Get appropriate read function from file extension
-    if file_extension == '.ptu':
-        from ptufile import PtuFile
-        ptu = PtuFile(file_path)
-        x_pixel_size = ptu.coords['X'][1]
-        y_pixel_size = ptu.coords['Y'][1]
-        tcspc_resolution = ptu.tcspc_resolution
-    elif file_extension == '.sdt':
-        from sdtfile import SdtFile
-        sdt = SdtFile(file_path)
-        tcspc_resolution = sdt.times[0][1] - sdt.times[0][0]
-    return x_pixel_size, y_pixel_size, tcspc_resolution
-
-def connect_events_file(widget):
+def connect_events_single_file(widget):
     '''
     Connect widget events to make some visible/invisible depending on others
     '''
     default_widget_bg_color = "background-color: #414851"
     missing_value_widget_bg_color = "background-color: #641818"
     def format_other_widgets(value):
-        print(f"Text changed: {value}")
-        x_pixel_size, y_pixel_size, tcspc_resolution = get_resolutions_from_single_file(value)
+        from napari_flim_phasor_plotter._io.utilities import get_valid_file_extension
+        from napari_flim_phasor_plotter._reader import get_resolutions_from_single_file
+        file_path = pathlib.Path(value)
+        file_extension = get_valid_file_extension(file_path)
+        # Files in folder path must have allowed file extension
+        if file_extension is None:
+            widget.file_path.native.setStyleSheet(missing_value_widget_bg_color)
+            return
+        else:
+            widget.file_path.native.setStyleSheet(default_widget_bg_color)
+
+        x_pixel_size, y_pixel_size, tcspc_resolution, number_channels = get_resolutions_from_single_file(file_path, file_extension)
         
         if x_pixel_size == 0:
             widget.x_pixel_size.native.setStyleSheet(missing_value_widget_bg_color)
@@ -284,11 +357,29 @@ def connect_events_file(widget):
             widget.micro_time_resolution.value = tcspc_resolution * 1e12 # Convert to ps, assuming tcspc_resolution is in s
             widget.micro_time_unit.value = 'ps'
             widget.micro_time_resolution.native.setStyleSheet(default_widget_bg_color)
+    def change_x_bg_color(value):
+        if value == 0:
+            widget.x_pixel_size.native.setStyleSheet(missing_value_widget_bg_color)
+        else:
+            widget.x_pixel_size.native.setStyleSheet(default_widget_bg_color)
+    def change_y_bg_color(value):
+        if value == 0:
+            widget.y_pixel_size.native.setStyleSheet(missing_value_widget_bg_color)
+        else:
+            widget.y_pixel_size.native.setStyleSheet(default_widget_bg_color)
+    def change_micro_time_bg_color(value):
+        if value == 0:
+            widget.micro_time_resolution.native.setStyleSheet(missing_value_widget_bg_color)
+        else:
+            widget.micro_time_resolution.native.setStyleSheet(default_widget_bg_color)
     # Connect events
     widget.file_path.changed.connect(format_other_widgets)
+    widget.x_pixel_size.changed.connect(change_x_bg_color)
+    widget.y_pixel_size.changed.connect(change_y_bg_color)
+    widget.micro_time_resolution.changed.connect(change_micro_time_bg_color)
 
 
-@magic_factory(widget_init=connect_events_file,
+@magic_factory(widget_init=connect_events_single_file,
                call_button='Convert', layout="vertical",
             file_path={'widget_type': 'FileEdit',
                         'mode': 'r'},
@@ -350,24 +441,18 @@ def convert_file_to_ome_tif(file_path: pathlib.Path,
     None
     """
     import numpy as np
-    from natsort import natsorted
-    from napari_flim_phasor_plotter._reader import get_read_function_from_extension, get_most_frequent_file_extension
-    from napari_flim_phasor_plotter._reader import ALLOWED_FILE_EXTENSION
-    from napari_flim_phasor_plotter._io.utilities import format_metadata
+    from napari_flim_phasor_plotter._reader import get_read_function_from_extension
+    from napari_flim_phasor_plotter._io.utilities import format_metadata, get_valid_file_extension
     import tifffile
 
     file_path = pathlib.Path(file_path)
-    file_extension = get_most_frequent_file_extension(file_path)
-    if file_extension not in ALLOWED_FILE_EXTENSION:
-        if file_extension == '':
-            message = 'Please select a folder containing FLIM images.'
-            print(message)
-        else:
-            message = 'Plugin does not support ' + \
-                file_extension + ' . Supported file extensions are: '
-            message += ', '.join(ALLOWED_FILE_EXTENSION[:-1])
-            print(message)
-
+    file_extension = get_valid_file_extension(file_path)
+    if file_extension is None:
+        return
+    # If x or y pixel size is missing, or micro_time_resolution is missing, return
+    if x_pixel_size == 0 or y_pixel_size == 0 or micro_time_resolution == 0:
+        notifications.show_warning('Please provide x, y pixel size and micro time resolution')
+        return
     if pixel_size_unit == 'um':
         pixel_size_unit = 'µm'
     if micro_time_unit == 'us':
