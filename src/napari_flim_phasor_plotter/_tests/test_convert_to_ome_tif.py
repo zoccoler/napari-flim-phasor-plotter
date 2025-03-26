@@ -68,13 +68,13 @@ def test_convert_folder_to_ome_tif():
     # check if the ome-tif files have the correct shape
     for i, file_path in enumerate(output_folder_path.iterdir()):
         if '.ome' in file_path.suffixes and '.tif' in file_path.suffixes:
-            if 'summed_intensity' in file_path.name:
-                with tifffile.TiffFile(file_path) as tif:
-                    # It seems squeeze=False keeps unitary dimensions, but adds an 'S' dimension in the end for OME-TIFFs
-                    assert tif.asarray(squeeze=False).shape[:-1] == expected_summed_intensity_shape 
-            else:
+            if '_FLIM' in file_path.name:
                 with tifffile.TiffFile(file_path) as tif:
                     assert tif.asarray(squeeze=False).shape[:-1] == expected_single_timepoint_shape
+            else:
+                with tifffile.TiffFile(file_path) as tif:
+                    # It seems squeeze=False keeps unitary dimensions, but adds an 'S' dimension in the end for OME-TIFFs
+                    assert tif.asarray(squeeze=False).shape[:-1] == expected_summed_intensity_shape                
 
 
 def test_convert_file_to_ome_tif():
@@ -112,7 +112,7 @@ def test_convert_file_to_ome_tif():
 
     widget = convert_to_ome_tif.convert_file_to_ome_tif()
     # Set the folder path
-    widget.folder_path.value = local_folder_path / "test.tif"
+    widget.file_path.value = local_folder_path / "test.tif"
     widget.x_pixel_size.value = x_pixel_size
     widget.y_pixel_size.value = y_pixel_size
     widget.pixel_size_unit.value = pixel_size_unit
