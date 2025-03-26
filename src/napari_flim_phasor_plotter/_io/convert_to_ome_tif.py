@@ -15,9 +15,18 @@ def connect_events_stack(widget):
         from napari_flim_phasor_plotter._reader import get_resolutions_from_single_file
         from napari_flim_phasor_plotter._io.utilities import get_valid_file_extension
         from natsort import natsorted
-        # Reset z and t widgets background color
-        widget.z_pixel_size.native.setStyleSheet(default_widget_bg_color)
-        widget.time_resolution_per_slice.native.setStyleSheet(default_widget_bg_color)
+        # Reset all widget values for a new folder path
+        widget.x_pixel_size.value = 0
+        widget.y_pixel_size.value = 0
+        widget.z_pixel_size.value = 0
+        widget.time_resolution_per_slice.value = 0
+        widget.micro_time_resolution.value = 0
+        widget.number_channels.value = 0
+        widget.pixel_size_unit.value = 'um'
+        widget.time_unit.value = 's'
+        widget.micro_time_unit.value = 'ps'
+        widget.channel_names.value = ''
+
         # Check if path leads to valid folder
         folder_path = pathlib.Path(value)
         file_extension = get_valid_file_extension(folder_path)
@@ -51,21 +60,18 @@ def connect_events_stack(widget):
 
         x_pixel_size, y_pixel_size, tcspc_resolution, number_channels = get_resolutions_from_single_file(file_paths[0], file_extension)
         if x_pixel_size == 0:
-            widget.x_pixel_size.value = 0
             widget.x_pixel_size.native.setStyleSheet(missing_value_widget_bg_color)
         else:
             widget.x_pixel_size.value = x_pixel_size * 1e6 # Convert to um, assuming x_pixel_size is in m
             widget.pixel_size_unit.value = 'um'
             widget.x_pixel_size.native.setStyleSheet(default_widget_bg_color)
         if y_pixel_size == 0:
-            widget.y_pixel_size.value = 0
             widget.y_pixel_size.native.setStyleSheet(missing_value_widget_bg_color)
         else:
             widget.y_pixel_size.value = y_pixel_size * 1e6
             widget.pixel_size_unit.value = 'um'
             widget.y_pixel_size.native.setStyleSheet(default_widget_bg_color)
         if tcspc_resolution == 0:
-            widget.micro_time_resolution.value = 0
             widget.micro_time_resolution.native.setStyleSheet(missing_value_widget_bg_color)
         else:
             widget.micro_time_resolution.value = tcspc_resolution * 1e12 # Convert to ps, assuming tcspc_resolution is in s
@@ -333,6 +339,15 @@ def connect_events_single_file(widget):
     def format_other_widgets(value):
         from napari_flim_phasor_plotter._io.utilities import get_valid_file_extension
         from napari_flim_phasor_plotter._reader import get_resolutions_from_single_file
+        # Reset all widget values for a new folder path
+        widget.x_pixel_size.value = 0
+        widget.y_pixel_size.value = 0
+        widget.micro_time_resolution.value = 0
+        widget.number_channels.value = 0
+        widget.pixel_size_unit.value = 'um'
+        widget.micro_time_unit.value = 'ps'
+        widget.channel_names.value = ''
+
         file_path = pathlib.Path(value)
         file_extension = get_valid_file_extension(file_path)
         # Files in folder path must have allowed file extension
