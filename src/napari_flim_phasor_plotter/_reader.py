@@ -263,7 +263,7 @@ def get_resolutions_from_single_file(file_path, file_extension):
         x_pixel_size = ptu.coords['X'][1]
         y_pixel_size = ptu.coords['Y'][1]
         tcspc_resolution = ptu.tcspc_resolution
-        number_of_channels = ptu.number_channels
+        number_channels = ptu.number_channels
     elif file_extension == '.sdt':
         from sdtfile import SdtFile
         sdt = SdtFile(file_path)
@@ -373,14 +373,20 @@ def flim_file_reader(path):
             if file_extension == '.tif' or file_extension == '.tiff':
                 tif = tifffile.TiffFile(file_path)
                 shaped_metadata = tif.shaped_metadata
-                if len(shaped_metadata) > 0:
+                if shaped_metadata is not None and len(shaped_metadata) > 0:
+                # if len(shaped_metadata) > 0:
                     shape = tif.shaped_metadata[0]['shape']
                 else:
                     show_warning('Warning: Cannot determine shape from metadata. Loading full stack.')
                     image = tifffile.imread(file_path)
                     shape = image.shape
                 if len(shape) > 4:  # stack (z or timelapse)
-                    channel_axis = None
+                    if '.ome' in file_path.suffixes:
+                        # If ome-tif, data should be 5D with channel being the first axis
+                        data = np.expand_dims(image, axis=2) # make it 6D, in accordance with plugin convention
+                        channel_axis = 0
+                    else:
+                        channel_axis = None
                 if len(shape) < 4:  # single 2D image (ut, y, x)
                     channel_axis = None
             # if .ptu, check if it is a 2D timelapse
@@ -408,12 +414,13 @@ def flim_file_reader(path):
 
         summed_intensity_image = np.sum(data, axis=1, keepdims=False)
         # arguments for TCSPC stack
-        add_kwargs = {'channel_axis': 0, 'metadata': metadata_list}
+        add_kwargs = {'channel_axis': 0, 'metadata': metadata_list,
+                      'name': 'FLIM_' + Path(path).stem,}
         layer_type = "image"
         layer_data.append((data, add_kwargs, layer_type))
         # arguments for intensity image
         add_kwargs = {'channel_axis': 0, 'metadata': metadata_list,
-                      'name': 'summed_intensity_image_' + Path(path).stem,
+                      'name': Path(path).stem,
                       'blending': 'additive'}
         layer_data.append((summed_intensity_image, add_kwargs, layer_type))
     return layer_data
