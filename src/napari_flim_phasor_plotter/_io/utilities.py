@@ -2,6 +2,7 @@ from napari.utils import notifications
 import warnings
 
 def get_valid_file_extension(path):
+    """Check if the file extension is supported by the plugin."""
     from napari_flim_phasor_plotter._reader import get_most_frequent_file_extension, ALLOWED_FILE_EXTENSION
     from pathlib import Path
     path = Path(path)
@@ -39,27 +40,56 @@ def format_metadata(flim_metadata,
     ----------
     flim_metadata : List[Dict]
         Metadata from the raw FLIM data file (usually .ptu or .sdt).
-    stack_shape : Tuple[int], optional
-        Shape of the stack, by default None. Required if no XML file is provided.
+    stack_shape : Tuple[int]
+        Shape of the stack.
+    output_axes_order : str, optional
+        Order of the axes in the output data, by default 'CTZYX'.
+    x_pixel_size : float, optional
+        Pixel size along the x-axis, by default 0 which means missing information.
+        The value will first be searched in the metadata.
+        If x_pixel_size is found in the metadata, the unit is assumed to be 'm'.
+        If x_pixel_size is not found in the metadata and this parameter equals to 0, a warning is shown and the function returns None.
+        If x_pixel_size is not found in the metadata and this parameter is different from 0, the value will be taken from this parameter and the unit will be taken from the pixel_size_unit parameter.
+    y_pixel_size : float, optional
+        Pixel size along the y-axis, by default 0 which means missing information.
+        The value will be taken from the metadata.
+        If y_pixel_size is found in the metadata, the unit is assumed to be 'm'.
+        If y_pixel_size is not found in the metadata and this parameter equals to 0, a warning is shown and the function returns None.
+        If y_pixel_size is not found in the metadata and this parameter is different from 0, the value will be taken from this parameter and the unit will be taken from the pixel_size_unit parameter.  
     z_pixel_size : float, optional
-        Pixel size along the z-axis, by default 0.5. Required if no XML file is provided.
+        Pixel size along the z-axis, by default 0 which means missing information.
+        If the size of the z-axis is 1, the value will be set to 1.
+        If the size of the z-axis is greater than 1 and this parameter equals to 0, a warning is shown and the function returns None.
+        If the size of the z-axis is greater than 1 and this parameter is different from 0, the value will be taken from this parameter and the unit will be taken from the pixel_size_unit parameter.
     pixel_size_unit : str, optional
-        Unit of the pixel size, by default 'µm'. Required if no XML file is provided.
+        Unit of the pixel size, by default 'm'. 
+        This parameter is overwritten if 'x_pixel_size' or 'y_pixel_size' are found in the metadata.
     time_resolution_per_slice : float, optional
-        Time resolution per slice, by default 0.663. Required if no XML file is provided.
+        Time resolution per slice, by default 0 which means missing information.
+        If the timelapse parameter is set to False, this parameter is ignored.
+        If the timelapse parameter is set to True and this parameter equals to 0, a warning is shown and the function returns None.
+        If the timelapse parameter is set to True and this parameter is different from 0, the value will be taken from this parameter and the unit will be taken from the time_unit parameter.
     time_unit : str, optional
-        Unit of the time resolution, by default 's'. Required if no XML file is provided.
+        Unit of the time resolution, by default 's'.
+        If timelapse is set to False, this parameter is ignored.
     channel_names : List[str], optional
-        Names of the channels, by default ['0', '1']. Required if no XML file is provided.
-    axes : str, optional
-        Axes of the data, by default 'CTZYX'.
+        Names of the channels, by default [].
+        If the number of channel names does not match the number of channels in the data, a warning is shown and the function returns None.
+    micro_time_resolution : float, optional
+        Time resolution for the photon counts axis, by default 0 which means missing information.
+        If the 'tcspc_resolution' is found in the metadata, the unit is assumed to be 's'.
+        If the 'tcspc_resolution' is not found in the metadata and this parameter equals to 0, a warning is shown and the function returns None.
+        If the 'tcspc_resolution' is not found in the metadata and this parameter is different from 0, the value will be taken from this parameter and the unit will be taken from the micro_time_unit parameter.
+    micro_time_unit : str, optional
+        Unit of the time resolution for the photon counts axis, by default 's'.
+        This parameter is overwritten if the 'tcspc_resolution' is found in the metadata.
     timelapse : bool, optional
-        Whether the data is a timelapse, by default True.
+        Whether the data is a timelapse, by default False.
 
     Returns
     -------
     Tuple[Dict, Dict]
-        Metadata for the whole timelapse without photon counts axis and metadata for single timepoint with photon counts axis.
+        Metadata for the whole timelapse without photon counts axis and metadata for single timepoint with photon counts axis replacing the time dimension axis.
     """
     z_stack = False
     multichannel = False
@@ -78,14 +108,14 @@ def format_metadata(flim_metadata,
         if x_pixel_size == 0:
             notifications.show_warning('x_pixel_size not found in file metadata,\nit must be provided manually')
             return None, None
-        flim_metadata[0]['x_pixel_size'] = x_pixel_size
+        flim_metadata[0]['x_pixel_size'] = x_pixel_size # Assign manual pixel size to metadata
     else:
         # if provided, assume pixel size unit to be m and convert to provided pixel size unit to be consistent along x, y and z
         if pixel_size_unit == 'pm':
             flim_metadata[0]['x_pixel_size'] = flim_metadata[0]['x_pixel_size'] * 1e12
         elif pixel_size_unit == 'nm':
             flim_metadata[0]['x_pixel_size'] = flim_metadata[0]['x_pixel_size'] * 1e9
-        elif pixel_size_unit == 'um':
+        elif pixel_size_unit == 'µm':
             flim_metadata[0]['x_pixel_size'] = flim_metadata[0]['x_pixel_size'] * 1e6
         elif pixel_size_unit == 'mm':
             flim_metadata[0]['x_pixel_size'] = flim_metadata[0]['x_pixel_size'] * 1e3
@@ -96,14 +126,14 @@ def format_metadata(flim_metadata,
         if y_pixel_size == 0:
             notifications.show_warning('y_pixel_size not found in file metadata,\nit must be provided manually')
             return None, None
-        flim_metadata[0]['y_pixel_size'] = y_pixel_size
+        flim_metadata[0]['y_pixel_size'] = y_pixel_size # Assign manual pixel size to metadata
     else:
         # if provided, assume pixel size unit to be m and convert to provided pixel size unit to be consistent along x, y and z
         if pixel_size_unit == 'pm':
             flim_metadata[0]['y_pixel_size'] = flim_metadata[0]['y_pixel_size'] * 1e12
         elif pixel_size_unit == 'nm':
             flim_metadata[0]['y_pixel_size'] = flim_metadata[0]['y_pixel_size'] * 1e9
-        elif pixel_size_unit == 'um':
+        elif pixel_size_unit == 'µm':
             flim_metadata[0]['y_pixel_size'] = flim_metadata[0]['y_pixel_size'] * 1e6
         elif pixel_size_unit == 'mm':
             flim_metadata[0]['y_pixel_size'] = flim_metadata[0]['y_pixel_size'] * 1e3
@@ -120,10 +150,10 @@ def format_metadata(flim_metadata,
         if z_pixel_size == 0:
             notifications.show_warning('z_pixel_size must be provided manually')
             return None, None
-        metadata_timelapse['PhysicalSizeZ'] = z_pixel_size
+        metadata_timelapse['PhysicalSizeZ'] = z_pixel_size # Assign manual pixel size to metadata
         metadata_timelapse['PhysicalSizeZUnit'] = pixel_size_unit
     else:
-        # Always provide a z size, even if it is not a stack because output is always be 5D for OME-TIFF
+        # Always provide a z size, even if it is not a stack because output is always be 5D for OME-TIF
         metadata_timelapse['PhysicalSizeZ'] = 1
         metadata_timelapse['PhysicalSizeZUnit'] = pixel_size_unit
     if timelapse: # If it is a true timelapse (not one having photon counts as the time axis)
@@ -139,7 +169,7 @@ def format_metadata(flim_metadata,
         metadata_timelapse['TimeIncrement'] = time_resolution
         metadata_timelapse['TimeIncrementUnit'] = time_unit
     else:
-        # Always provide a time increment, even if it is not a timelapse because output is always be 5D for OME-TIFF
+        # Always provide a time increment, even if it is not a timelapse because output is always be 5D for OME-TIF
         metadata_timelapse['TimeIncrement'] = 1
         metadata_timelapse['TimeIncrementUnit'] = 's'
     if multichannel:
