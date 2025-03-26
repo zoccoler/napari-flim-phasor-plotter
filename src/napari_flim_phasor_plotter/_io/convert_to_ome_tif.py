@@ -1,10 +1,10 @@
 from magicgui import magic_factory
 import pathlib
 from napari.utils import notifications
-
 from magicgui.tqdm import tqdm
 
 def connect_events_stack(widget):
+    """Connect widget events to change the background color or visibility of widgets based on the collected metadata."""
     default_widget_bg_color = "background-color: #414851"
     missing_value_widget_bg_color = "background-color: #641818"
     def format_other_widgets(value):
@@ -71,6 +71,7 @@ def connect_events_stack(widget):
             widget.micro_time_resolution.value = tcspc_resolution * 1e12 # Convert to ps, assuming tcspc_resolution is in s
             widget.micro_time_unit.value = 'ps'
             widget.micro_time_resolution.native.setStyleSheet(default_widget_bg_color)
+        widget.number_channels.value = number_channels
 
     def change_x_bg_color(value):
         if value == 0:
@@ -108,7 +109,7 @@ def connect_events_stack(widget):
 @magic_factory(widget_init=connect_events_stack,
                call_button='Convert', layout="vertical",
                folder_path={'widget_type': 'FileEdit',
-                            'mode': 'd'},
+                            'mode': 'd', 'label': 'Folder Path',},
                 x_pixel_size={'widget_type': 'FloatSpinBox',
                             'label': 'X Pixel Size',
                             'step': 0.001, 'min': 0},
@@ -128,16 +129,19 @@ def connect_events_stack(widget):
                 time_unit={'widget_type': 'ComboBox',
                             'label': 'Time Unit',
                             'choices': ['fs', 'ps', 'ns', 'us', 'ms', 's']},
-                channel_names={'widget_type': 'LineEdit',
-                            'label': 'Channel Names',
-                            'tooltip': 'Comma separated channel names'},
                 micro_time_resolution={'widget_type': 'FloatSpinBox',
                             'label': 'FLIM Time Resolution',
                             'tooltip': 'Time resolution for the TCSPC histogram',
                             'step': 0.001, 'min': 0},
                 micro_time_unit={'widget_type': 'ComboBox',
                             'label': 'FLIM Time Unit',
-                            'choices': ['fs', 'ps', 'ns', 'us', 'ms', 's']},                           
+                            'choices': ['fs', 'ps', 'ns', 'us', 'ms', 's']},
+                channel_names={'widget_type': 'LineEdit',
+                        'label': 'Channel Names',
+                        'tooltip': 'Comma separated channel names'},
+                number_channels={'widget_type': 'Label',
+                        'label': 'Number of Channels',
+                        'enabled': False, 'value': 0, 'gui_only': True,},                           
                cancel_button={'widget_type': 'PushButton',
                               'visible': False,
                               'text': 'Cancel', })
@@ -148,16 +152,17 @@ def convert_folder_to_ome_tif(folder_path: pathlib.Path,
                                 pixel_size_unit: str = 'um',
                                 time_resolution_per_slice: float = 0,
                                 time_unit: str = 's',
-                                channel_names: str = '',
                                 micro_time_resolution: float = 0,
                                 micro_time_unit: str = 'ps',
+                                channel_names: str = '',
+                                number_channels: str = '0',
                               cancel_button: bool = False):
     """ Convert a folder of FLIM images representing an image stack to a OME-TIFF file per timepoint (if timelapse) plus a OME-TIFF file with summed intensity (no FLIM).
 
-    The folder must contain only FLIM images of the same type (e.g. all .ptu files or all .sdt files).
+    The folder must contain only FLIM images of the same type (e.g. most of them must be .ptu files or .sdt files).
     The file names must be in the format: "name_t000_z000", or "name_z000", or name_"t000", where "t000" is the time point and "z000" is the z slice.
     The z slice and time point must be the last two numbers in the file
-    name. The z slice and time point must be separated by an underscore.
+    name. The z slice and time point must be preceeded by an underscore.
 
     Parameters
     ----------
@@ -175,12 +180,14 @@ def convert_folder_to_ome_tif(folder_path: pathlib.Path,
         Time resolution per slice, by default 0.
     time_unit : str, optional
         Unit of the time resolution, by default 's'.
-    channel_names : str, optional
-        Names of the channels, separated by comma, by default ''.
     micro_time_resolution : float, optional
         Time resolution for the TCSPC histogram, by default 0.
     micro_time_unit : str, optional
         Unit of the time resolution for the TCSPC histogram, by default 'ps'.
+    channel_names : str, optional
+        Names of the channels, separated by comma, by default ''.
+    number_channels : str, optional
+        Number of channels, by default 0. Not used, but required for the widget and filled from the metadata.
     
     Returns
     -------
@@ -256,10 +263,10 @@ def convert_folder_to_ome_tif(folder_path: pathlib.Path,
     if len(list_of_time_point_paths) > 1:
         timelapse = True
 
-    for z_paths, t in zip(tqdm(list_of_time_point_paths, label='time_points'), range(len(list_of_time_point_paths))):
+    for z_paths, t in zip(tqdm(list_of_time_point_paths, label='Time Points'), range(len(list_of_time_point_paths))):
         stack_shape = (*image_slice_shape[:-2], max_z+1, *image_slice_shape[-2:]) # (channel, ut, z, y, x)
         numpy_array = np.zeros(stack_shape, dtype=image_dtype)
-        for path, j in zip(tqdm(z_paths, label='z-slices'), range(len(z_paths))):
+        for path, j in zip(tqdm(z_paths, label='Z-Slices'), range(len(z_paths))):
             data, flim_metadata = imread(path) # Read single file
             if j==0:
                 # Test if format_metadata works with provided inputs
@@ -306,12 +313,12 @@ def convert_folder_to_ome_tif(folder_path: pathlib.Path,
 
         if timelapse:
             t_string = str(t).zfill(len(str(len(list_of_time_point_paths))))
-            output_file_name =  folder_path.stem + f'_t{t_string}.ome.tif'
+            output_file_name =  folder_path.stem + f'_FLIM_t{t_string}.ome.tif'
         else:
-            output_file_name = folder_path.stem + '.ome.tif'
+            output_file_name = folder_path.stem + '_FLIM.ome.tif'
         with tifffile.TiffWriter(output_path / output_file_name, ome=True) as tif:
             tif.write(numpy_array, metadata=metadata_single_timepoint, compression='zlib')
-    output_file_name = folder_path.stem + '_summed_intensity.ome.tif'
+    output_file_name = folder_path.stem + '.ome.tif'
     with tifffile.TiffWriter(output_path / output_file_name, ome=True) as tif:
         tif.write(numpy_array_summed_intensity[:], metadata=metadata_timelapse, compression='zlib')
     print('Done')
@@ -320,9 +327,7 @@ def convert_folder_to_ome_tif(folder_path: pathlib.Path,
 
 
 def connect_events_single_file(widget):
-    '''
-    Connect widget events to make some visible/invisible depending on others
-    '''
+    """Connect widget events to change the background color or visibility of widgets based on the collected metadata."""
     default_widget_bg_color = "background-color: #414851"
     missing_value_widget_bg_color = "background-color: #641818"
     def format_other_widgets(value):
@@ -338,7 +343,6 @@ def connect_events_single_file(widget):
             widget.file_path.native.setStyleSheet(default_widget_bg_color)
 
         x_pixel_size, y_pixel_size, tcspc_resolution, number_channels = get_resolutions_from_single_file(file_path, file_extension)
-        
         if x_pixel_size == 0:
             widget.x_pixel_size.native.setStyleSheet(missing_value_widget_bg_color)
         else:
@@ -357,6 +361,7 @@ def connect_events_single_file(widget):
             widget.micro_time_resolution.value = tcspc_resolution * 1e12 # Convert to ps, assuming tcspc_resolution is in s
             widget.micro_time_unit.value = 'ps'
             widget.micro_time_resolution.native.setStyleSheet(default_widget_bg_color)
+        widget.number_channels.value = str(number_channels)
     def change_x_bg_color(value):
         if value == 0:
             widget.x_pixel_size.native.setStyleSheet(missing_value_widget_bg_color)
@@ -382,7 +387,7 @@ def connect_events_single_file(widget):
 @magic_factory(widget_init=connect_events_single_file,
                call_button='Convert', layout="vertical",
             file_path={'widget_type': 'FileEdit',
-                        'mode': 'r'},
+                        'mode': 'r', 'label': 'File Path'},
             x_pixel_size={'widget_type': 'FloatSpinBox',
                         'label': 'X Pixel Size',
                         'step': 0.001, 'min': 0},
@@ -392,16 +397,19 @@ def connect_events_single_file(widget):
             pixel_size_unit={'widget_type': 'ComboBox',
                         'label': 'Pixel Size Unit',
                         'choices': ['pm', 'nm', 'um', 'mm', 'cm', 'm']},
-            channel_names={'widget_type': 'LineEdit',
-                        'label': 'Channel Names',
-                        'tooltip': 'Comma separated channel names'},
             micro_time_resolution={'widget_type': 'FloatSpinBox',
                         'label': 'FLIM Time Resolution',
                         'tooltip': 'Time resolution for the TCSPC histogram',
                         'step': 0.001, 'min': 0},
             micro_time_unit={'widget_type': 'ComboBox',
                         'label': 'FLIM Time Unit',
-                        'choices': ['fs', 'ps', 'ns', 'us', 'ms', 's']},                           
+                        'choices': ['fs', 'ps', 'ns', 'us', 'ms', 's']},
+            channel_names={'widget_type': 'LineEdit',
+                        'label': 'Channel Names',
+                        'tooltip': 'Comma separated channel names'},
+            number_channels={'widget_type': 'Label',
+                        'label': 'Number of Channels',
+                        'enabled': False, 'value': 0, 'gui_only': True,},                        
             cancel_button={'widget_type': 'PushButton',
                             'visible': False,
                             'text': 'Cancel', })
@@ -409,11 +417,12 @@ def convert_file_to_ome_tif(file_path: pathlib.Path,
                                 x_pixel_size: float = 0,
                                 y_pixel_size: float = 0,
                                 pixel_size_unit: str = 'um',
-                                channel_names: str = '',
                                 micro_time_resolution: float = 0,
                                 micro_time_unit: str = 'ps',
+                                channel_names: str = '',
+                                number_channels: str = '0',
                               cancel_button: bool = False):
-    """ Convert a file to a OME-TIFF file.
+    """ Convert a single file to a OME-TIFF file.
 
     The file must be a FLIM image of the same type (e.g. .ptu or .sdt).
     The plugin will generate a single OME-TIFF file, replacing the time axis ('T') with the photon counts axis.
@@ -429,12 +438,14 @@ def convert_file_to_ome_tif(file_path: pathlib.Path,
         Pixel size along the y-axis, by default 0.
     pixel_size_unit : str, optional
         Unit of the pixel size, by default 'um'.
-    channel_names : List[str], optional
-        Names of the channels, by default [].
     micro_time_resolution : float, optional
         Time resolution for the TCSPC histogram, by default 0.
     micro_time_unit : str, optional
         Unit of the time resolution for the TCSPC histogram, by default 'ps'.
+    channel_names : str, optional
+        Names of the channels, separated by comma, by default ''.
+    number_channels : str, optional
+        Number of channels, by default 0. Not used, but required for the widget and filled from the metadata.
     
     Returns
     -------
@@ -487,7 +498,7 @@ def convert_file_to_ome_tif(file_path: pathlib.Path,
     print(f"Saving OME-TIF...")
     output_path = file_path.parent / 'OME-TIFs'
     output_path.mkdir(exist_ok=True)
-    output_file_name = file_path.stem + '.ome.tif'
+    output_file_name = file_path.stem + '_FLIM.ome.tif'
     with tifffile.TiffWriter(output_path / output_file_name, ome=True) as tif:
         tif.write(data, metadata=metadata_single_timepoint, compression='zlib')
     print('Done')
