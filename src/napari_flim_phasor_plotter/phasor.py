@@ -43,6 +43,7 @@ def get_phasor_components(flim_data, harmonic=1):
     SOFTWARE.
     """
     import dask.array as da
+
     if isinstance(flim_data, da.Array):
         fft_slice_function = fft_slice_4d_dask
     else:
@@ -75,6 +76,7 @@ def fft_slice_4d(arr, slice_num):
 def fft_slice_4d_dask(arr, slice_num):
     """Slice of FFT over first axis of a dask array"""
     import dask.array as da
+
     # Dask fft along first axis
     fft_arr = da.fft.fft(arr, axis=0)
     # Return the specified slice of the FFT array
