@@ -182,7 +182,7 @@ def read_single_tif_file(path, channel_axis=0, ut_axis=1, timelapse=False, viewe
         Array containing the FLIM images and a metadata list (one metadata per channel).
         Array is either 4D (ch, ut, y, x) or 6D (ch, ut, t, z, y, x).
     """
-    from skimage.io import imread
+    from skimage.io import imread #TODO: replace by tifffile to handle metadata from .ome.tif files
     from napari.utils. notifications import show_error, show_warning
     data = imread(path)
     # Handle different input data dimensions
@@ -411,17 +411,35 @@ def flim_file_reader(path):
         non_empty_channel_indices = [i for i in range(data.shape[0]) if np.any(data[i])]
         data = data[non_empty_channel_indices]
         metadata_list = [metadata_list[i] for i in non_empty_channel_indices if len(metadata_list) > 0]
-
+        scale_list = []
+        for metadata in metadata_list:
+            if 'x_pixel_size' not in metadata:
+                metadata['x_pixel_size'] = 1
+            if 'y_pixel_size' not in metadata:
+                metadata['y_pixel_size'] = 1
+            if 'tcspc_resolution' not in metadata:
+                metadata['tcspc_resolution'] = 1
+            if len(data.shape) == 6:
+                if 'z_pixel_size' not in metadata:
+                    metadata['z_pixel_size'] = 1
+                metadata['time_resolution'] = 1
+                scale_list.append((metadata['tcspc_resolution'], metadata['time_resolution'],
+                                   metadata['z_pixel_size'], metadata['y_pixel_size'], metadata['x_pixel_size']))
+            else:
+                scale_list.append((metadata['tcspc_resolution'], metadata['y_pixel_size'], metadata['x_pixel_size']))
+        print(scale_list)
         summed_intensity_image = np.sum(data, axis=1, keepdims=False)
         # arguments for TCSPC stack
         add_kwargs = {'channel_axis': 0, 'metadata': metadata_list,
-                      'name': 'FLIM_' + Path(path).stem,}
+                      'name': 'FLIM_' + Path(path).stem,
+                      'scale': scale_list}
         layer_type = "image"
         layer_data.append((data, add_kwargs, layer_type))
         # arguments for intensity image
         add_kwargs = {'channel_axis': 0, 'metadata': metadata_list,
                       'name': Path(path).stem,
-                      'blending': 'additive'}
+                      'blending': 'additive',
+                      'scale': scale_list[1:]}
         layer_data.append((summed_intensity_image, add_kwargs, layer_type))
     return layer_data
 
