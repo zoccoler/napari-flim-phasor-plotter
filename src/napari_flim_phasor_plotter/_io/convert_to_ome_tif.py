@@ -256,7 +256,7 @@ def convert_folder_to_ome_tif(folder_path: pathlib.Path,
     max_time_point = get_max_time_points(file_paths, file_extension)
     # Build stack shape with the fllowing convention: (channel, time, z, y, x)
     stack_shape = (
-        image_slice_shape[0], max_time_point+1, max_z+1, *image_slice_shape[-2:])
+        image_slice_shape[0], max_time_point, max_z, *image_slice_shape[-2:])
     # Create an empty numpy array with the maximum shape and dtype
     numpy_array_summed_intensity = np.zeros(stack_shape, dtype=image_dtype)
     # Get a nested list of time point containing a list of z slices
@@ -270,7 +270,7 @@ def convert_folder_to_ome_tif(folder_path: pathlib.Path,
         timelapse = True
 
     for z_paths, t in zip(tqdm(list_of_time_point_paths, label='Time Points'), range(len(list_of_time_point_paths))):
-        stack_shape = (*image_slice_shape[:-2], max_z+1, *image_slice_shape[-2:]) # (channel, ut, z, y, x)
+        stack_shape = (*image_slice_shape[:-2], max_z, *image_slice_shape[-2:]) # (channel, ut, z, y, x)
         numpy_array = np.zeros(stack_shape, dtype=image_dtype)
         for path, j in zip(tqdm(z_paths, label='Z-Slices'), range(len(z_paths))):
             data, flim_metadata = imread(path) # Read single file
