@@ -70,7 +70,7 @@ name. The z slice and time point must be separated by an underscore.
     max_time_point = get_max_time_points(file_paths, file_extension)
     # Build stack shape with the fllowing convention: (channel, ut, time, z, y, x)
     stack_shape = (
-        *image_slice_shape[:-2], max_time_point+1, max_z+1, *image_slice_shape[-2:])
+        *image_slice_shape[:-2], max_time_point, max_z, *image_slice_shape[-2:])
     # Get a nested list of time point containing a list of z slices
     list_of_time_point_paths = get_structured_list_of_paths(
         file_paths, file_extension)

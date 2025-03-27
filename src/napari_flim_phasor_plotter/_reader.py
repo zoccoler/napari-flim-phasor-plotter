@@ -595,10 +595,9 @@ def get_max_zslices(file_paths, file_extension):
     max_z : int
         Max z slices.
     """
-    max_z = max([get_current_tz(file_path)
-                for file_path in file_paths if file_path.suffix == file_extension])[1]
-    if max_z is None:
-        return 0
+    z_numbers = [get_current_tz(file_path)[1]
+                for file_path in file_paths if file_path.suffix == file_extension]
+    max_z = len(np.unique(np.array(z_numbers)))
     return max_z
 
 
@@ -617,10 +616,9 @@ def get_max_time_points(file_paths, file_extension):
     max_time : int
         Max time points.
     """
-    max_time = max([get_current_tz(file_path)
-                   for file_path in file_paths if file_path.suffix == file_extension])[0]
-    if max_time is None:
-        return 0
+    t_numbers = [get_current_tz(file_path)[0]
+                for file_path in file_paths if file_path.suffix == file_extension]
+    max_time = len(np.unique(np.array(t_numbers)))
     return max_time
 
 
