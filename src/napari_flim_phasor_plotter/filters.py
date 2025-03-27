@@ -1,11 +1,12 @@
 from magicgui import magic_factory
 from typing import TYPE_CHECKING
+
 if TYPE_CHECKING:
     import napari.types
 
 
 def make_time_mask(image, laser_frequency):
-    '''
+    """
     Create a time mask from the image histogram maximum onwards
 
     Parameters
@@ -18,17 +19,20 @@ def make_time_mask(image, laser_frequency):
     -------
     time_mask : boolean array
         Time mask
-    '''
+    """
     import numpy as np
     from napari_flim_phasor_plotter._synthetic import create_time_array
+
     # create time array based on laser frequency
     time_array = create_time_array(
-        laser_frequency, n_points=image.shape[0])  # ut axis
+        laser_frequency, n_points=image.shape[0]
+    )  # ut axis
     time_step = time_array[1]
     # choose starting index based on maximum value of image histogram
     heights, bin_edges = np.histogram(
         # index where ut max
-        np.ravel(np.argmax(image, axis=0) * time_step), bins=time_array
+        np.ravel(np.argmax(image, axis=0) * time_step),
+        bins=time_array,
     )
 
     start_index = np.argmax(heights[1:]) + 1
@@ -38,7 +42,7 @@ def make_time_mask(image, laser_frequency):
 
 
 def make_space_mask_from_manual_threshold(image, threshold):
-    '''
+    """
     Create a space mask from the summed intensity image over time, keeping
     pixels whose value is above threshold.
 
@@ -52,8 +56,9 @@ def make_space_mask_from_manual_threshold(image, threshold):
     -------
     space_mask : boolean array
         A boolean mask representing pixels to keep.
-    '''
+    """
     import numpy as np
+
     intensity_image = np.sum(image, axis=0)
     space_mask = intensity_image >= threshold
 
@@ -64,6 +69,7 @@ def apply_median_filter(image, n=1):
     import numpy as np
     from skimage.filters import median
     from skimage.morphology import cube
+
     shape = image.shape
     # Add dimensions if needed, to make it 4D (time, z, y, x)
     while len(image.shape) < 4:
@@ -80,9 +86,11 @@ def apply_median_filter(image, n=1):
     return image_filt.reshape(shape)
 
 
-def apply_binning(flim_image: "napari.types.ImageData",
-                  bin_size: int = 2,
-                  binning_3D: bool = True) -> "napari.types.ImageData":
+def apply_binning(
+    flim_image: "napari.types.ImageData",
+    bin_size: int = 2,
+    binning_3D: bool = True,
+) -> "napari.types.ImageData":
     """
     Apply binning to TCSPC FLIM image.
 
@@ -104,6 +112,7 @@ def apply_binning(flim_image: "napari.types.ImageData",
     """
     import numpy as np
     from scipy.ndimage import convolve
+
     shape = flim_image.shape
     # Add dimensions if needed, to make it 5D (ut, time, z, y, x)
     while len(flim_image.shape) < 5:
@@ -113,12 +122,20 @@ def apply_binning(flim_image: "napari.types.ImageData",
     if binning_3D:
         kernel = np.full((bin_size, bin_size, bin_size), 1)
 
-        for utime, time in np.ndindex(flim_image.shape[0], flim_image.shape[1]):
-            image_binned[utime, time, :, :, :] = convolve(flim_image[utime, time, :, :, :], kernel)
+        for utime, time in np.ndindex(
+            flim_image.shape[0], flim_image.shape[1]
+        ):
+            image_binned[utime, time, :, :, :] = convolve(
+                flim_image[utime, time, :, :, :], kernel
+            )
     else:
         kernel = np.full((bin_size, bin_size), 1)
 
-        for utime, time, z in np.ndindex(flim_image.shape[0], flim_image.shape[1], flim_image.shape[2]):
-            image_binned[utime, time, z, :, :] = convolve(flim_image[utime, time, z, :, :], kernel)
+        for utime, time, z in np.ndindex(
+            flim_image.shape[0], flim_image.shape[1], flim_image.shape[2]
+        ):
+            image_binned[utime, time, z, :, :] = convolve(
+                flim_image[utime, time, z, :, :], kernel
+            )
     # return with original shape
     return image_binned.reshape(shape)

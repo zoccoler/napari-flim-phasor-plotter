@@ -1,10 +1,11 @@
 def monoexp(x, A, tau):
     import numpy as np
-    return A * np.exp(-(1/tau)*x)
+
+    return A * np.exp(-(1 / tau) * x)
 
 
 def create_time_array(frequency, n_points=100):
-    '''
+    """
     Create time array from laser frequency
 
     Parameters
@@ -17,8 +18,9 @@ def create_time_array(frequency, n_points=100):
     -------
     time_array : array
         Time array (in nanoseconds)
-    '''
+    """
     import numpy as np
+
     time_window = 1 / (frequency * 10**6)
     time_window_ns = time_window * 10**9  # in nanoseconds
     time_step = time_window_ns / n_points  # ns
@@ -47,6 +49,7 @@ def make_synthetic_flim_data(time_array, amplitude_list, tau_list):
         Synthetic FLIM image
     """
     import numpy as np
+
     # Handle input types
     if not isinstance(tau_list, list):
         tau_list = [tau_list]
@@ -59,7 +62,8 @@ def make_synthetic_flim_data(time_array, amplitude_list, tau_list):
     for amp, tau in zip(amplitude_list, tau_list):
         intensity = monoexp(time_array, amp, tau)
         flim_data = np.repeat(intensity[:, np.newaxis], 1, axis=1).reshape(
-            len(time_array), 1, 1)
+            len(time_array), 1, 1
+        )
         flim_data_list.append(flim_data)
     flim_data = np.concatenate(flim_data_list, axis=1)
     return flim_data

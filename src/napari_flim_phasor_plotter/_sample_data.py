@@ -26,17 +26,31 @@ def load_seminal_receptacle_image():
 
     file_path = DATA_ROOT / "seminal_receptacle_FLIM_single_image.sdt"
     image, metadata = read_single_sdt_file(file_path)
-    image, metadata = image[0], metadata[0]  # Use first channel, there is no second channel in this image
+    image, metadata = (
+        image[0],
+        metadata[0],
+    )  # Use first channel, there is no second channel in this image
     image = np.expand_dims(image, axis=(1, 2))  # (ut, t, z, y, x)
-    return [(image, {'name': 'seminal receptacle raw FLIM image',
-                     'metadata': metadata,
-                     'contrast_limits': (np.amin(image[image.shape[0] // 2, ...]),
-                                         np.amax(image[image.shape[0] // 2, ...])),
-                     }),
-            (np.amax(image, axis=0), {'name': 'seminal receptacle intensity image',
-                                      'metadata': metadata,
-                                      }),
-            ]
+    return [
+        (
+            image,
+            {
+                "name": "seminal receptacle raw FLIM image",
+                "metadata": metadata,
+                "contrast_limits": (
+                    np.amin(image[image.shape[0] // 2, ...]),
+                    np.amax(image[image.shape[0] // 2, ...]),
+                ),
+            },
+        ),
+        (
+            np.amax(image, axis=0),
+            {
+                "name": "seminal receptacle intensity image",
+                "metadata": metadata,
+            },
+        ),
+    ]
 
 
 def load_hazelnut_image():
@@ -56,19 +70,33 @@ def load_hazelnut_image():
 
     file_path = DATA_ROOT / "hazelnut_FLIM_single_image.ptu"
     image, metadata = read_single_ptu_file(file_path)
-    image, metadata = image[0], metadata[0]  # Use first channel, second detector is empty
+    image, metadata = (
+        image[0],
+        metadata[0],
+    )  # Use first channel, second detector is empty
     image = np.expand_dims(image, axis=(1, 2))  # (ut, t, z, y, x)
-    return [(image, {'name': 'hazelnut raw FLIM image',
-                     'metadata': metadata,
-                     'contrast_limits': (np.amin(image[image.shape[0] // 2, ...]),
-                                         np.amax(image[image.shape[0] // 2, ...])),
-                     'scale': [metadata['ImgHdr_PixResol']] * 2,
-                     }),
-            (np.amax(image, axis=0), {'name': 'hazelnut intensity image',
-                                      'metadata': metadata,
-                                      'scale': [metadata['ImgHdr_PixResol']] * 2,
-                                      }),
-            ]
+    return [
+        (
+            image,
+            {
+                "name": "hazelnut raw FLIM image",
+                "metadata": metadata,
+                "contrast_limits": (
+                    np.amin(image[image.shape[0] // 2, ...]),
+                    np.amax(image[image.shape[0] // 2, ...]),
+                ),
+                "scale": [metadata["ImgHdr_PixResol"]] * 2,
+            },
+        ),
+        (
+            np.amax(image, axis=0),
+            {
+                "name": "hazelnut intensity image",
+                "metadata": metadata,
+                "scale": [metadata["ImgHdr_PixResol"]] * 2,
+            },
+        ),
+    ]
 
 
 def load_hazelnut_z_stack():
@@ -90,53 +118,75 @@ def load_hazelnut_z_stack():
     from pathlib import Path
     from tqdm import tqdm
     from napari_flim_phasor_plotter._reader import read_stack
+
     extracted_folder_path = Path(DATA_ROOT / "unzipped_hazelnut_FLIM_z_stack")
     # If extracted folder does not exist or is empty, download and extract the zip file
-    if not extracted_folder_path.exists() or (extracted_folder_path.exists() and not any(extracted_folder_path.iterdir())):
-    
-        zip_url = 'https://github.com/zoccoler/hazelnut_FLIM_z_stack_data/raw/main/hazelnut_FLIM_z_stack.zip'
+    if not extracted_folder_path.exists() or (
+        extracted_folder_path.exists()
+        and not any(extracted_folder_path.iterdir())
+    ):
+
+        zip_url = "https://github.com/zoccoler/hazelnut_FLIM_z_stack_data/raw/main/hazelnut_FLIM_z_stack.zip"
         zip_file_path = Path(DATA_ROOT / "hazelnut_FLIM_z_stack.zip")
         # Download the zip file
         response = requests.get(zip_url)
 
         # Total size in bytes.
-        total_size = int(response.headers.get('content-length', 0))
+        total_size = int(response.headers.get("content-length", 0))
         print(f"Total download size: {total_size/1e6} MBytes")
-        print(f"Downloading to {zip_file_path}"	)
-        block_size = 1024 
-        progress_bar = tqdm(total=total_size, unit='iB', unit_scale=True, desc="Downloading zip file")
-        with open(zip_file_path, 'wb') as zip_file:
+        print(f"Downloading to {zip_file_path}")
+        block_size = 1024
+        progress_bar = tqdm(
+            total=total_size,
+            unit="iB",
+            unit_scale=True,
+            desc="Downloading zip file",
+        )
+        with open(zip_file_path, "wb") as zip_file:
             for block in response.iter_content(block_size):
                 progress_bar.update(len(block))
                 zip_file.write(block)
         progress_bar.close()
         if total_size != 0 and progress_bar.n != total_size:
             print("ERROR: Something went wrong with the download")
-    
 
         # Create the target directory
         extracted_folder_path.mkdir(parents=True, exist_ok=True)
         # Extract the zip file
-        with zipfile.ZipFile(zip_file_path, 'r') as zip_ref:
+        with zipfile.ZipFile(zip_file_path, "r") as zip_ref:
             zip_ref.extractall(extracted_folder_path)
-        
+
         # Delete the zip file after extraction
         Path(zip_file_path).unlink()
     folder_path = extracted_folder_path / "hazelnut_FLIM_z_stack"
 
     image, metadata = read_stack(folder_path)
-    image, metadata = image[0], metadata[0]  # Use first channel, second detector is empty
-    return [(image, {'name': 'hazelnut raw FLIM z-stack',
-                     'metadata': metadata,
-                     'contrast_limits': (np.amin(image[image.shape[0] // 2, ...]),
-                                         np.amax(image[image.shape[0] // 2, ...])),
-                     'scale': [2] + [metadata['ImgHdr_PixResol']] * 2,
-                     }),
-            (np.amax(image, axis=0), {'name': 'hazelnut intensity z-stack',
-                                      'metadata': metadata,
-                                      'scale': [2] + [metadata['ImgHdr_PixResol']] * 2,
-                                      }),
-            ]
+    image, metadata = (
+        image[0],
+        metadata[0],
+    )  # Use first channel, second detector is empty
+    return [
+        (
+            image,
+            {
+                "name": "hazelnut raw FLIM z-stack",
+                "metadata": metadata,
+                "contrast_limits": (
+                    np.amin(image[image.shape[0] // 2, ...]),
+                    np.amax(image[image.shape[0] // 2, ...]),
+                ),
+                "scale": [2] + [metadata["ImgHdr_PixResol"]] * 2,
+            },
+        ),
+        (
+            np.amax(image, axis=0),
+            {
+                "name": "hazelnut intensity z-stack",
+                "metadata": metadata,
+                "scale": [2] + [metadata["ImgHdr_PixResol"]] * 2,
+            },
+        ),
+    ]
 
 
 def load_lifetime_cat_synthtetic_single_image():
@@ -146,16 +196,29 @@ def load_lifetime_cat_synthtetic_single_image():
 
     file_path = DATA_ROOT / "lifetime_cat.tif"
     image, metadata = read_single_tif_file(file_path, channel_axis=None)
-    image = image[0]  # Use first channel, there is no second channel in this image
+    image = image[
+        0
+    ]  # Use first channel, there is no second channel in this image
     # Read metadata from associated yaml file
     with open(DATA_ROOT / "lifetime_cat_metadata.yml", "r") as stream:
         metadata = yaml.safe_load(stream)
-    return [(image, {'name': 'raw lifetime cat synthetic image',
-                     'metadata': metadata,
-                     'contrast_limits': (np.amin(image[image.shape[0] // 2, ...]),
-                                         np.amax(image[image.shape[0] // 2, ...])),
-                     }),
-            (np.amax(image, axis=0), {'name': 'intensity lifetime cat synthetic image',
-                                      'metadata': metadata,
-                                      }),
-            ]
+    return [
+        (
+            image,
+            {
+                "name": "raw lifetime cat synthetic image",
+                "metadata": metadata,
+                "contrast_limits": (
+                    np.amin(image[image.shape[0] // 2, ...]),
+                    np.amax(image[image.shape[0] // 2, ...]),
+                ),
+            },
+        ),
+        (
+            np.amax(image, axis=0),
+            {
+                "name": "intensity lifetime cat synthetic image",
+                "metadata": metadata,
+            },
+        ),
+    ]
