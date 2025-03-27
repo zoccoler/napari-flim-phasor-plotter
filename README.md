@@ -171,7 +171,7 @@ Also, this example workflow can be reproduced by running this jupyter notebook: 
 
 #### Single File Conversion
 
-##### To `.ome.tif` (5D)
+##### To `.ome.tif` (5D Output)
 
 If you have a `.ptu` or `.sdt` file and want to convert it to an `.ome.tif` file with minimal metadata, you can do so via `Plugins > FLIM-phasor-plotter > Convert Single File to ome.tif` (or `Layers -> Data -> Convert -> Single File -> Convert Single File to ome.tif` if napari version >= `0.5.0`).
 
@@ -187,7 +187,7 @@ The output files will always be 5D to be readily suitable for uploading to an OM
 
 #### Multiple Files Conversion (Stack)
 
-##### To `.ome.tif`
+##### To `.ome.tif` (5D Output)
 
 If you have a collection of `.ptu` or `.sdt` files and want to convert them to `.ome.tif` files with minimal metadata, you can do so via `Plugins > FLIM-phasor-plotter > Convert Folder (Stack) to ome.tif` (or `Layers -> Data -> Convert -> Folder (Stack) -> Convert Folder (Stack) to ome.tif` if napari version >= `0.5.0`).
 
@@ -201,7 +201,7 @@ After filling the necessary fields, click on `Convert` to start the conversion. 
 
 The output files will always be 5D to be readily suitable for uploading to an OMERO server. If a dimension is missing, it will be added with a size of 1.
 
-#### To `.zarr` (6D)
+#### To `.zarr` (6D Output)
 
 If a collection of raw (uncompressed) images are larger than 4GB, we recommend converting them to `.zarr`. This can be done via `Plugins > FLIM-phasor-plotter > Convert Folder (Stack) to zarr`(or `Layers -> Data -> Convert -> Folder (Stack) -> Convert Folder (Stack) to zarr` if napari version >= `0.5.0`).
 
