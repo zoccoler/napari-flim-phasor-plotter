@@ -39,6 +39,16 @@ Here is an automatically generated Table of Contents:
 ```{tableofcontents}
 ```
 
+## Limitations / Future Work
+
+The plugin does not yet support:
+- Phasor calibration
+- Round cluster selection or cursor selection (only free-hand selection is available)
+- Pseudo-channel generation from selected clusters in the phasor plot
+- FRET analysis
+- Tile processing
+- Fitting of decay curves
+
 [github]: https://github.com/zoccoler/napari-flim-phasor-plotter "GitHub source code repository for this project"
 [tutorial]: https://docs.readthedocs.io/en/stable/tutorial/index.html "Official Read the Docs Tutorial"
 [jb-docs]: https://jupyterbook.org/en/stable/ "Official Jupyter Book documentation"
