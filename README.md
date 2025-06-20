@@ -18,7 +18,7 @@ Napari-flim-phasor-plotter is a [napari](https://napari.org/stable/) plugin to i
 
 ## Documentation
 
-Please check our [documentation](https://zoccoler.github.io/napari-flim-phasor-plotter/) for more details on how to install and use this plugin.
+Please check our [documentation](https://napari-flim-phasor-plotter.readthedocs.io/en/latest/) for more details on how to install and use this plugin.
 
 ## Contributing
 
