@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 napari_version = tuple(map(int, list(version("napari").split(".")[:2])))
 
 
-def connect_events(widget):
+def _connect_events(widget):
     """
     Connect widget events to make some visible/invisible depending on others
     """
@@ -27,7 +27,7 @@ def connect_events(widget):
 
 
 @magic_factory(
-    widget_init=connect_events,
+    widget_init=_connect_events,
     laser_frequency={
         "step": 0.001,
         "tooltip": (
@@ -71,7 +71,7 @@ def make_flim_phasor_plot(
     from skimage.segmentation import relabel_sequential
     from napari.layers import Labels
 
-    from napari_flim_phasor_plotter.phasor import get_phasor_components
+    from napari_flim_phasor_plotter.phasors import get_phasor_components
     from napari_flim_phasor_plotter.filters import (
         make_time_mask,
         make_space_mask_from_manual_threshold,
@@ -86,14 +86,22 @@ def make_flim_phasor_plot(
         ):
             # in MHz
             laser_frequency = image_layer.metadata["TTResult_SyncRate"] * 1e-6
+            print(f"Laser frequency set to {laser_frequency} MHz")
         elif image_layer.metadata["file_type"] == "sdt":
             # in MHz
-            laser_frequency = (
-                image_layer.metadata["measure_info"]["StopInfo"][
-                    "max_sync_rate"
-                ][0]
-                * 10**-6
-            )
+            try:
+                laser_frequency = (
+                    image_layer.metadata["measure_info"]["StopInfo"][
+                        6
+                    ]
+                    * 10**-6
+                )
+                print(f"Laser frequency set to {laser_frequency} MHz")
+            except KeyError:
+                warnings.warn(
+                    "Laser frequency not found in metadata. "
+                    "Please set it manually in the widget."
+                )
 
     time_mask = make_time_mask(image, laser_frequency)
 

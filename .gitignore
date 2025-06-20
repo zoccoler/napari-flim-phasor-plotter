@@ -59,6 +59,7 @@ instance/
 
 # Sphinx documentation
 docs/_build/
+/docs/conf.py
 
 # MkDocs documentation
 /site/
@@ -88,3 +89,8 @@ unzipped_hazelnut_FLIM_z_stack/
 
 # videos
 *.mp4
+
+# output files created by tests
+src/napari_flim_phasor_plotter/_tests/tif_files/
+src/napari_flim_phasor_plotter/_tests/tif_file/
+src/napari_flim_phasor_plotter/_tests/zarr_file/

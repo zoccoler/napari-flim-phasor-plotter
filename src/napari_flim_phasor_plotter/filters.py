@@ -21,10 +21,10 @@ def make_time_mask(image, laser_frequency):
         Time mask
     """
     import numpy as np
-    from napari_flim_phasor_plotter._synthetic import create_time_array
+    from napari_flim_phasor_plotter._synthetic import _create_time_array
 
     # create time array based on laser frequency
-    time_array = create_time_array(
+    time_array = _create_time_array(
         laser_frequency, n_points=image.shape[0]
     )  # ut axis
     time_step = time_array[1]
@@ -66,6 +66,22 @@ def make_space_mask_from_manual_threshold(image, threshold):
 
 
 def apply_median_filter(image, n=1):
+    """
+    Apply a median filter to the image.
+
+    Parameters
+    ----------
+    image: array
+        The image to filter.
+    n: int, optional
+        The number of times to apply the median filter, by default 1.
+        This is useful for reducing noise in the image.
+
+    Returns
+    -------
+    image_filt: array
+        The filtered image with the same shape as the input image.
+    """
     import numpy as np
     from skimage.filters import median
     from skimage.morphology import cube

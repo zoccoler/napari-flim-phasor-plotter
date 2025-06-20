@@ -1,4 +1,4 @@
-from napari_flim_phasor_plotter._sample_data import (
+from napari_flim_phasor_plotter.sample_data import (
     load_seminal_receptacle_image,
     load_hazelnut_image,
     load_hazelnut_z_stack,

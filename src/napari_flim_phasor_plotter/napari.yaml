@@ -8,43 +8,43 @@ contributions:
       python_name: napari_flim_phasor_plotter._reader:napari_get_reader
       title: Open data with FLIM phasor plotter
     - id: napari-flim-phasor-plotter.load_seminal_receptacle_image
-      python_name: napari_flim_phasor_plotter._sample_data:load_seminal_receptacle_image
+      python_name: napari_flim_phasor_plotter.sample_data:load_seminal_receptacle_image
       title: Load sample data from FLIM phasor plotter
     - id: napari-flim-phasor-plotter.load_hazelnut_image
-      python_name: napari_flim_phasor_plotter._sample_data:load_hazelnut_image
+      python_name: napari_flim_phasor_plotter.sample_data:load_hazelnut_image
       title: Load sample data from FLIM phasor plotter
     - id: napari-flim-phasor-plotter.load_hazelnut_z_stack
-      python_name: napari_flim_phasor_plotter._sample_data:load_hazelnut_z_stack
+      python_name: napari_flim_phasor_plotter.sample_data:load_hazelnut_z_stack
       title: Load sample data from FLIM phasor plotter
     - id: napari-flim-phasor-plotter.load_lifetime_cat_synthetic
-      python_name: napari_flim_phasor_plotter._sample_data:load_lifetime_cat_synthtetic_single_image
+      python_name: napari_flim_phasor_plotter.sample_data:load_lifetime_cat_synthtetic_single_image
       title: Load sample data from FLIM phasor plotter
     - id: napari-flim-phasor-plotter.calculate_phasors
-      python_name: napari_flim_phasor_plotter._widget:make_flim_phasor_plot
+      python_name: napari_flim_phasor_plotter.widget:make_flim_phasor_plot
       title: Calculate Phasors
     - id: napari-flim-phasor-plotter.open_phasor_plot
       python_name: napari_flim_phasor_plotter._plotting:PhasorPlotterWidget
       title: Open FLIM Phasor Plotter
     - id: napari-flim-phasor-plotter.convert_to_zarr
-      python_name: napari_flim_phasor_plotter._io.convert_to_zarr:convert_folder_to_zarr
+      python_name: napari_flim_phasor_plotter.convert.convert_to_zarr:convert_folder_to_zarr
       title: Convert Folder (Stack) to 6D zarr
     - id: napari-flim-phasor-plotter.convert_folder_to_ome_tif
-      python_name: napari_flim_phasor_plotter._io.convert_to_ome_tif:convert_folder_to_ome_tif
+      python_name: napari_flim_phasor_plotter.convert.convert_to_ome_tif:convert_folder_to_ome_tif
       title: Convert Folder (Stack) to 5D ome-tif (one file per timepoint)
     - id: napari-flim-phasor-plotter.convert_file_to_ome_tif
-      python_name: napari_flim_phasor_plotter._io.convert_to_ome_tif:convert_file_to_ome_tif
+      python_name: napari_flim_phasor_plotter.convert.convert_to_ome_tif:convert_file_to_ome_tif
       title: Convert Single File to ome-tif
     - id: napari-flim-phasor-plotter.apply_binning
-      python_name: napari_flim_phasor_plotter._widget:apply_binning_widget
+      python_name: napari_flim_phasor_plotter.widget:apply_binning_widget
       title: Apply binning to TCSPC FLIM data
     - id: napari-flim-phasor-plotter.Split_N_Largest_Cluster_Labels
-      python_name: napari_flim_phasor_plotter._widget:Split_N_Largest_Cluster_Labels
+      python_name: napari_flim_phasor_plotter.widget:Split_N_Largest_Cluster_Labels
       title: Split N Largest Clusters Labels
     - id: napari-flim-phasor-plotter.manual_label_extract
-      python_name: napari_flim_phasor_plotter._widget:manual_label_extract
+      python_name: napari_flim_phasor_plotter.widget:manual_label_extract
       title: Manual Label Extract
     - id: napari-flim-phasor-plotter.smooth_cluster_mask
-      python_name: napari_flim_phasor_plotter._widget:smooth_cluster_mask
+      python_name: napari_flim_phasor_plotter.widget:smooth_cluster_mask
       title: Smooth Cluster Mask
 
   readers:

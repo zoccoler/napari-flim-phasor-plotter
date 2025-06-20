@@ -20,7 +20,7 @@ def connect_events_stack(widget):
         from napari_flim_phasor_plotter._reader import (
             get_resolutions_from_single_file,
         )
-        from napari_flim_phasor_plotter._io.utilities import (
+        from napari_flim_phasor_plotter.convert._utilities import (
             get_valid_file_extension,
         )
         from natsort import natsorted
@@ -304,7 +304,7 @@ def convert_folder_to_ome_tif(
         get_max_zslices,
         get_max_time_points,
     )
-    from napari_flim_phasor_plotter._io.utilities import (
+    from napari_flim_phasor_plotter.convert._utilities import (
         format_metadata,
         get_valid_file_extension,
     )
@@ -489,7 +489,7 @@ def connect_events_single_file(widget):
     missing_value_widget_bg_color = "background-color: #641818"
 
     def format_other_widgets(value):
-        from napari_flim_phasor_plotter._io.utilities import (
+        from napari_flim_phasor_plotter.convert._utilities import (
             get_valid_file_extension,
         )
         from napari_flim_phasor_plotter._reader import (
@@ -680,7 +680,7 @@ def convert_file_to_ome_tif(
     from napari_flim_phasor_plotter._reader import (
         get_read_function_from_extension,
     )
-    from napari_flim_phasor_plotter._io.utilities import (
+    from napari_flim_phasor_plotter.convert._utilities import (
         format_metadata,
         get_valid_file_extension,
     )

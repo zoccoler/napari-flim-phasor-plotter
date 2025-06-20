@@ -1,6 +1,6 @@
-from napari_flim_phasor_plotter._io import convert_to_ome_tif
-from napari_flim_phasor_plotter._synthetic import make_synthetic_flim_data
-from napari_flim_phasor_plotter._synthetic import create_time_array
+from napari_flim_phasor_plotter.convert import convert_to_ome_tif
+from napari_flim_phasor_plotter._synthetic import _make_synthetic_flim_data
+from napari_flim_phasor_plotter._synthetic import _create_time_array
 import numpy as np
 from pathlib import Path
 from skimage import io
@@ -43,10 +43,10 @@ def test_convert_folder_to_ome_tif():
     local_folder_path = Path(__file__).parent / "tif_files"
     local_folder_path.mkdir(exist_ok=True)
 
-    time_array = create_time_array(
+    time_array = _create_time_array(
         laser_frequency, number_of_photon_count_bins
     )
-    flim_data = make_synthetic_flim_data(time_array, amplitude, tau_list)
+    flim_data = _make_synthetic_flim_data(time_array, amplitude, tau_list)
     flim_data = flim_data.reshape(
         number_of_photon_count_bins, t, z, y, x
     )  # (ut, t, z, y, x)
@@ -141,10 +141,10 @@ def test_convert_file_to_ome_tif():
     local_folder_path = Path(__file__).parent / "tif_file"
     local_folder_path.mkdir(exist_ok=True)
 
-    time_array = create_time_array(
+    time_array = _create_time_array(
         laser_frequency, number_of_photon_count_bins
     )
-    flim_data = make_synthetic_flim_data(time_array, amplitude, tau_list)
+    flim_data = _make_synthetic_flim_data(time_array, amplitude, tau_list)
     flim_data = flim_data.reshape(
         number_of_photon_count_bins, y, x
     )  # (ut, y, x)
