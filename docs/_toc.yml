@@ -4,6 +4,13 @@
 format: jb-book
 root: intro
 parts:
+- caption: Usage
+  chapters:
+  - file: opening_data
+  - file: data_conversion
+  - file: phasor_analysis
+  - file: workflow
+  - file: saving_results
 - caption: Examples
   chapters:
   - file: notebooks/Example_workflow
@@ -14,4 +21,3 @@ parts:
   - file: phasors_api
   - file: filters_api
   - file: convert_api
-

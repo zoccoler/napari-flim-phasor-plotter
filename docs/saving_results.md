@@ -1,0 +1,5 @@
+# Saving Results
+
+ Save your segmentation results by selecting (clicking on) the corresponding `Labels` layer (usually named `cluster_ids_in_space`) and then going to `File -> Save Selected Layer`. This can save the layer as a `.tif` file. To save a screenshot of the phasor plot, click on the `Save` button on the toolbar. To save the phasor plot as a `.csv` file, go to `Tools -> Measurement -> Show table (nsr)` and a new widget will show up. From the `labels layer` dropdown, choose the layer that contains the table, whose name starts with `Labelled_pixels_from_`... and then click on the `Run` button. This should bring the table with `G` and `S` values for each pixel. Click on the `Save as csv...` button to save the table as a `.csv` file.
+
+![saving](https://github.com/zoccoler/napari-flim-phasor-plotter/raw/main/images/saving_results.gif)
