@@ -4,7 +4,7 @@ def monoexp(x, A, tau):
     return A * np.exp(-(1 / tau) * x)
 
 
-def create_time_array(frequency, n_points=100):
+def _create_time_array(frequency, n_points=100):
     """
     Create time array from laser frequency
 
@@ -29,7 +29,7 @@ def create_time_array(frequency, n_points=100):
     return time_array
 
 
-def make_synthetic_flim_data(time_array, amplitude_list, tau_list):
+def _make_synthetic_flim_data(time_array, amplitude_list, tau_list):
     """Create a synthetic FLIM image from amplitudes and tau (lifetime)
 
     Each different tau in the list adds a new pixel to the image.

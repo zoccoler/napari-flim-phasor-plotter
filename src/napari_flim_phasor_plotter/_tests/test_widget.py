@@ -1,6 +1,6 @@
-from napari_flim_phasor_plotter._widget import make_flim_phasor_plot
-from napari_flim_phasor_plotter._synthetic import make_synthetic_flim_data
-from napari_flim_phasor_plotter._synthetic import create_time_array
+from napari_flim_phasor_plotter.widgets import make_flim_phasor_plot
+from napari_flim_phasor_plotter._synthetic import _make_synthetic_flim_data
+from napari_flim_phasor_plotter._synthetic import _create_time_array
 import numpy as np
 import pandas as pd
 
@@ -109,8 +109,8 @@ def test_make_flim_phasor_plot_and_plotter(make_napari_viewer, capsys):
 
     number_of_time_points = 1000
 
-    time_array = create_time_array(laser_frequency, number_of_time_points)
-    flim_data = make_synthetic_flim_data(time_array, amplitude, tau_list)
+    time_array = _create_time_array(laser_frequency, number_of_time_points)
+    flim_data = _make_synthetic_flim_data(time_array, amplitude, tau_list)
     flim_data = flim_data.reshape(number_of_time_points, 3, 3)
     flim_data = np.expand_dims(
         flim_data, axis=[1, 2]
@@ -156,7 +156,7 @@ def test_make_flim_phasor_plot_and_plotter(make_napari_viewer, capsys):
 
 
 def test_manual_label_extract():
-    from napari_flim_phasor_plotter._widget import manual_label_extract
+    from napari_flim_phasor_plotter.widgets import manual_label_extract
     from napari.layers import Labels
 
     # Inputs
@@ -182,7 +182,7 @@ def test_manual_label_extract():
 
 
 def test_get_n_largest_cluster_labels():
-    from napari_flim_phasor_plotter._widget import get_n_largest_cluster_labels
+    from napari_flim_phasor_plotter.widgets import get_n_largest_cluster_labels
 
     # Input
     number_of_clusters = 2
@@ -201,7 +201,7 @@ def test_get_n_largest_cluster_labels():
 
 
 def test_Split_N_Largest_Cluster_Labels(make_napari_viewer):
-    from napari_flim_phasor_plotter._widget import (
+    from napari_flim_phasor_plotter.widgets import (
         Split_N_Largest_Cluster_Labels,
     )
     from napari.layers import Labels

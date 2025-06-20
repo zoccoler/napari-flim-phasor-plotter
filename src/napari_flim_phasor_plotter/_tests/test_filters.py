@@ -102,8 +102,8 @@ def test_median_filter():
     import numpy as np
     from napari_flim_phasor_plotter.phasor import get_phasor_components
     from napari_flim_phasor_plotter._synthetic import (
-        make_synthetic_flim_data,
-        create_time_array,
+        _make_synthetic_flim_data,
+        _create_time_array,
     )
     from napari_flim_phasor_plotter.filters import apply_median_filter
 
@@ -119,8 +119,8 @@ def test_median_filter():
     n_points = 10
     amplitudes = [1, 1, 2, 2]
     lifetimes = [0.8, 2, 0.8, 2]
-    time_array = create_time_array(frequency, n_points)
-    flim_data = make_synthetic_flim_data(
+    time_array = _create_time_array(frequency, n_points)
+    flim_data = _make_synthetic_flim_data(
         time_array, amplitudes, lifetimes
     ).reshape(n_points, 2, 2)
 
