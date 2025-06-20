@@ -66,6 +66,22 @@ def make_space_mask_from_manual_threshold(image, threshold):
 
 
 def apply_median_filter(image, n=1):
+    """
+    Apply a median filter to the image.
+
+    Parameters
+    ----------
+    image: array
+        The image to filter.
+    n: int, optional
+        The number of times to apply the median filter, by default 1.
+        This is useful for reducing noise in the image.
+
+    Returns
+    -------
+    image_filt: array
+        The filtered image with the same shape as the input image.
+    """
     import numpy as np
     from skimage.filters import median
     from skimage.morphology import cube

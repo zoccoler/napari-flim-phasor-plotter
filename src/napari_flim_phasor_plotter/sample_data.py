@@ -190,6 +190,26 @@ def load_hazelnut_z_stack():
 
 
 def load_lifetime_cat_synthtetic_single_image():
+    """
+    Load a synthetic single image of a cat FLIM image.
+
+    Different parts of the cat have different lifetimes.
+    The lifetime values are:
+
+    - 0.8 ns for ears, tale, feet and face
+
+    - 2 ns for body and eyes
+    
+    - a mixture of 0.8 ns and 2 ns for arms, nose and inner ears (60% amplitude for 0.8 ns and 40% for 2 ns)
+    
+    Returns
+    -------
+    list_of_tuples_of_images_and_metadata : List[LayerDataTuple]
+        A list of tuples, each tuple containing an image and its metadata.
+        The first tuple contains the raw FLIM image with dimensions (ut, t, z, y, x) and metadata.
+        The second tuple contains the intensity image with dimensions (t, z, y, x) and metadata.
+        Time and z dimensions are all of length 1.
+    """
     import yaml
     import numpy as np
     from napari_flim_phasor_plotter._reader import read_single_tif_file
