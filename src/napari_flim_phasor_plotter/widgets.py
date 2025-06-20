@@ -86,14 +86,22 @@ def make_flim_phasor_plot(
         ):
             # in MHz
             laser_frequency = image_layer.metadata["TTResult_SyncRate"] * 1e-6
+            print(f"Laser frequency set to {laser_frequency} MHz")
         elif image_layer.metadata["file_type"] == "sdt":
             # in MHz
-            laser_frequency = (
-                image_layer.metadata["measure_info"]["StopInfo"][
-                    6
-                ]
-                * 10**-6
-            )
+            try:
+                laser_frequency = (
+                    image_layer.metadata["measure_info"]["StopInfo"][
+                        6
+                    ]
+                    * 10**-6
+                )
+                print(f"Laser frequency set to {laser_frequency} MHz")
+            except KeyError:
+                warnings.warn(
+                    "Laser frequency not found in metadata. "
+                    "Please set it manually in the widget."
+                )
 
     time_mask = make_time_mask(image, laser_frequency)
 
