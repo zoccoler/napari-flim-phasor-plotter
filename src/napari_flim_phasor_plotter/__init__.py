@@ -1,4 +1,4 @@
-__version__ = "0.1.3"
+__version__ = "0.2.0"
 
 from ._reader import napari_get_reader
 from .sample_data import (
