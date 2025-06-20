@@ -1,0 +1,17 @@
+# Table of contents
+# Learn more at https://jupyterbook.org/customize/toc.html
+
+format: jb-book
+root: intro
+parts:
+- caption: Examples
+  chapters:
+  - file: notebooks/Example_workflow
+- caption: API Reference
+  chapters:
+  - file: sample_data_api
+  - file: widgets_api
+  - file: phasors_api
+  - file: filters_api
+  - file: convert_api
+

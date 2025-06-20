@@ -59,6 +59,7 @@ instance/
 
 # Sphinx documentation
 docs/_build/
+/docs/conf.py
 
 # MkDocs documentation
 /site/
