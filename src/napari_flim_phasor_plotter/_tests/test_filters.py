@@ -100,7 +100,7 @@ def test_binning():
 
 def test_median_filter():
     import numpy as np
-    from napari_flim_phasor_plotter.phasor import get_phasor_components
+    from napari_flim_phasor_plotter.phasors import get_phasor_components
     from napari_flim_phasor_plotter._synthetic import (
         _make_synthetic_flim_data,
         _create_time_array,

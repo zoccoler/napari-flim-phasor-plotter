@@ -71,7 +71,7 @@ def make_flim_phasor_plot(
     from skimage.segmentation import relabel_sequential
     from napari.layers import Labels
 
-    from napari_flim_phasor_plotter.phasor import get_phasor_components
+    from napari_flim_phasor_plotter.phasors import get_phasor_components
     from napari_flim_phasor_plotter.filters import (
         make_time_mask,
         make_space_mask_from_manual_threshold,
