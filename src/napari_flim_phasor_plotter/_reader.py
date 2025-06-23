@@ -655,10 +655,16 @@ def get_current_tz(file_path):
     if matches_z is not None:
         current_z = int(matches_z.group(1))
         current_z -= 1  # 0-based index while file names convention are 1-based
+    else:
+        # If no z slice in file name, assume it is 0
+        current_z = 0
     matches_t = re.search(pattern_t, file_name)
     if matches_t is not None:
         current_t = int(matches_t.group(1))
         current_t -= 1  # 0-based index while file names convention are 1-based
+    else:
+        # If no time point in file name, assume it is 0
+        current_t = 0
     return current_t, current_z
 
 

@@ -1,6 +1,6 @@
 (intro)=
 
-# napari-flim-phasor
+# napari-flim-phasor-plotter
 
 Here you find documentation for the napari-flim-phasor-plotter plugin, a [napari](https://napari.org/stable/) plugin to interactively load and show raw fluorescence lifetime imaging microscopy (FLIM) single images and series and generate phasor plots. These are Fourier transforms of the decay data being visualized using the [napari-clusters-plotter](https://github.com/BiAPoL/napari-clusters-plotter) plotter, adapted to suit the FLIM context. This allows qualitative and quantitative downstream analysis of FLIM images.
 
