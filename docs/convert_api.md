@@ -69,4 +69,24 @@
    -------
    None
 
+.. py:function:: convert_folder_to_zarr(
+    folder_path: pathlib.Path)
+    :noindex:
+
+    Convert a folder of FLIM images to a zarr file.
+
+    The folder must contain only FLIM images of the same type (e.g. all .ptu files or all .sdt files).
+    The file names must be in the format: "name_t000_z000" where "t000" is the time point and "z000" is the z slice.
+    The z slice and time point must be the last two numbers in the file
+    name. The z slice and time point must be separated by an underscore.
+
+    Parameters
+    ----------
+    folder_path : str
+        Path to the folder containing the FLIM images.
+    
+    Returns
+    -------
+    None
+
 ```
