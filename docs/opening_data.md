@@ -1,5 +1,9 @@
 # Opening Raw FLIM Data
 
+You can open raw fluorescence lifetime imaging microscopy (FLIM) data in napari by dragging and dropping compatible files (or folders with files for stacks) into the viewer.
+
+![opening_data](../images/open_file.gif)
+
 ## Input Data Types
 
 This plugin can read the following FLIM **file types**:
