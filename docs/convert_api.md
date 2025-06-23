@@ -69,8 +69,7 @@
    -------
    None
 
-.. py:function:: convert_folder_to_zarr(
-    folder_path: pathlib.Path)
+.. py:function:: convert_folder_to_zarr(folder_path)
     :noindex:
 
     Convert a folder of FLIM images to a zarr file.
@@ -88,5 +87,4 @@
     Returns
     -------
     None
-
 ```
