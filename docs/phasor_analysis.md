@@ -10,7 +10,7 @@ Call the plugin from the menu `Plugins > FLIM phasor plotter > Calculate Phasors
 
  Use the toolbar on top of the plot to navigate through the plot. For example, by activating the zoom tool button (magnifying glass icon), you can zoom in (with left click) or out (with right click), just *remember to disbale the zoom tool after using it by clicking on the icon once again*.
 
-Change the colormap of the phasor plot from various `Colormaps` by clicking on the pulldown `Expand for advanced options`. There, you can also choose to display the color range in log scale by checking the `Log scale` checkbox. Optionally, add tau lines to the plot by specifying a range of lifetimes to be displayed (write them separated by commas) in the field `Tau lines` and click on `Show/hide` to visualize them on top of the phasor plot.
+Change the colormap of the phasor plot from various `Colormaps` by clicking on the pulldown `Expand for advanced options`. There, you can also choose to display the color range in log scale by checking the `Log scale` checkbox. Optionally, add tau lines to the plot by specifying a range of lifetimes to be displayed (write them separated by commas) in the field `Tau lines` and click on `Show/hide` to visualize them on top of the phasor plot. *Note: the tau lines are calculated based on the laser frequency and the chosen harmonic. They serve as a visualization aid only, not as a quantitative analysis tool.*
 
 ## Phasor Plot Selection
 
