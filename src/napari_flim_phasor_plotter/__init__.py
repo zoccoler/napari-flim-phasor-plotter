@@ -8,7 +8,7 @@ from .sample_data import (
     load_lifetime_cat_synthtetic_single_image,
 )
 from .convert import convert_to_zarr, convert_to_ome_tif
-from . import filters, _plotting, phasors, widgets
+from . import filters, _plotting, phasors, widgets, _calibration
 
 
 __all__ = (
@@ -20,4 +20,5 @@ __all__ = (
     "filters",
     "_plotting",
     "widgets",
+    "_calibration",
 )
