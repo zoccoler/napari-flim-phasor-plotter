@@ -42,7 +42,6 @@ Here is an automatically generated Table of Contents:
 ## Limitations / Future Work
 
 The plugin does not yet support:
-- Phasor calibration
 - Round cluster selection or cursor selection (only free-hand selection is available)
 - Pseudo-channel generation from selected clusters in the phasor plot
 - FRET analysis
