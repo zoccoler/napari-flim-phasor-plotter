@@ -3,7 +3,7 @@
 ```{eval-rst}
 .. currentmodule:: napari_flim_phasor_plotter.widgets
 
-.. py:function:: make_flim_phasor_plot(image_layer, laser_frequency=40, harmonic=1, threshold=10, apply_median=False, median_n=1, napari_viewer=None)
+.. py:function:: make_flim_phasor_plot(image_layer, laser_frequency=40, harmonic=1, threshold=10, apply_median=False, median_n=1, apply_calibration=False, calibration_image_layer=None, calibration_lifetime=None, napari_viewer=None)
    :noindex:
 
    Calculate phasor components from FLIM image and plot them.
@@ -22,6 +22,12 @@
        apply median filter to image before phasor calculation, by default False (median_n is ignored)
    median_n : int, optional
        number of iterations of median filter, by default 1
+   apply_calibration : bool, optional
+        if True, apply calibration to phasor coordinates (if calibration image and lifetime are also given), by default False
+   calibration_image_layer : napari.layers.Image, optional
+        napari image layer with calibration FLIM data (microtime first axis). If not given, no calibration is applied
+   calibration_lifetime : float, optional
+        lifetime (in ns) of calibration sample. If not given or 0, no calibration is applied
    napari_viewer : napari.Viewer, optional
        napari viewer instance, by default None
 
