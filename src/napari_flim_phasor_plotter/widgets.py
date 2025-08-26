@@ -251,11 +251,11 @@ def make_flim_phasor_plot(
         # Update laser frequency spinbox
         # TO DO: access and update widget in a better way
         if (
-            "Calculate Phasors (napari-flim-phasor-plotter)"
+            "Calculate Phasors (FLIM phasor plotter)"
             in dock_widgets_names
         ):
             widgets = napari_viewer.window._dock_widgets[
-                "Calculate Phasors (napari-flim-phasor-plotter)"
+                "Calculate Phasors (FLIM phasor plotter)"
             ]
             laser_frequency_spinbox = (
                 widgets.children()[4].children()[2].children()[-1]
