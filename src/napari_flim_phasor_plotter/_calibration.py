@@ -145,7 +145,7 @@ def calculate_phasor_rotation_and_scaling(
     return phase, modulation
 
 
-def calibrate_phasor_coordinates(
+def apply_phasor_adjustment(
     g: np.ndarray, s: np.ndarray, phase: float, modulation: float
 ) -> Tuple[np.ndarray, np.ndarray]:
     """

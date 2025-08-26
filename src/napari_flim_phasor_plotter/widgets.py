@@ -122,7 +122,7 @@ def make_flim_phasor_plot(
     # Calibration logic
     if apply_calibration:
         if calibration_image_layer is not None and calibration_lifetime is not None and calibration_lifetime > 0:
-            from napari_flim_phasor_plotter._calibration import compute_phasor_adjustment, calibrate_phasor_coordinates
+            from napari_flim_phasor_plotter._calibration import compute_phasor_adjustment, apply_phasor_adjustment
             calib_img = calibration_image_layer.data
             phase, modulation = compute_phasor_adjustment(
                 calib_img,
@@ -132,7 +132,7 @@ def make_flim_phasor_plot(
             )
             space_mask = make_space_mask_from_manual_threshold(image, threshold)
             g, s, dc = get_phasor_components(image, harmonic=harmonic)
-            g, s = calibrate_phasor_coordinates(g, s, phase, modulation)
+            g, s = apply_phasor_adjustment(g, s, phase, modulation)
         else:
             warnings.warn("Calibration image or lifetime not set.")
             return
