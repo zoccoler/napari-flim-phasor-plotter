@@ -19,11 +19,18 @@ def _connect_events(widget):
     def toggle_median_n_widget(event):
         widget.median_n.visible = event
 
+    def toggle_calibration_widgets(event):
+        widget.calibration_image_layer.visible = event
+        widget.calibration_lifetime.visible = event
+
     # Connect events
     widget.apply_median.changed.connect(toggle_median_n_widget)
+    widget.apply_calibration.changed.connect(toggle_calibration_widgets)
     # Intial visibility states
     widget.median_n.visible = False
     widget.laser_frequency.label = "Laser Frequency (MHz)"
+    widget.calibration_image_layer.visible = False
+    widget.calibration_lifetime.visible = False
 
 
 @magic_factory(
@@ -43,6 +50,9 @@ def make_flim_phasor_plot(
     threshold: int = 10,
     apply_median: bool = False,
     median_n: int = 1,
+    apply_calibration: bool = False,
+    calibration_image_layer: "napari.layers.Image" = None,
+    calibration_lifetime: float = None,
     napari_viewer: "napari.Viewer" = None,
 ) -> None:
     """Calculate phasor components from FLIM image and plot them.
@@ -61,6 +71,12 @@ def make_flim_phasor_plot(
         apply median filter to image before phasor calculation, by default False (median_n is ignored)
     median_n : int, optional
         number of iterations of median filter, by default 1
+    apply_calibration : bool, optional
+        if True, apply calibration to phasor coordinates (if calibration image and lifetime are also given), by default False
+    calibration_image_layer : napari.layers.Image, optional
+        napari image layer with calibration FLIM data (microtime first axis). If not given, no calibration is applied
+    calibration_lifetime : float, optional
+        lifetime (in ns) of calibration sample. If not given or 0, no calibration is applied
     napari_viewer : napari.Viewer, optional
         napari viewer instance, by default None
     """
@@ -78,7 +94,8 @@ def make_flim_phasor_plot(
     )
     from napari_flim_phasor_plotter.filters import apply_median_filter
     from napari_flim_phasor_plotter._plotting import PhasorPlotterWidget
-
+    if image_layer is None:
+        return
     image = image_layer.data
     if "file_type" in image_layer.metadata:
         if (image_layer.metadata["file_type"] == "ptu") and (
@@ -102,14 +119,29 @@ def make_flim_phasor_plot(
                     "Laser frequency not found in metadata. "
                     "Please set it manually in the widget."
                 )
-
-    time_mask = make_time_mask(image, laser_frequency)
-
-    space_mask = make_space_mask_from_manual_threshold(image, threshold)
-
-    image = image[time_mask]
-
-    g, s, dc = get_phasor_components(image, harmonic=harmonic)
+    # Calibration logic
+    if apply_calibration:
+        if calibration_image_layer is not None and calibration_lifetime is not None and calibration_lifetime > 0:
+            from napari_flim_phasor_plotter._calibration import compute_phasor_adjustment, apply_phasor_adjustment
+            calib_img = calibration_image_layer.data
+            phase, modulation = compute_phasor_adjustment(
+                calib_img,
+                laser_frequency,
+                calibration_lifetime,
+                harmonic=harmonic
+            )
+            space_mask = make_space_mask_from_manual_threshold(image, threshold)
+            g, s, dc = get_phasor_components(image, harmonic=harmonic)
+            g, s = apply_phasor_adjustment(g, s, phase, modulation)
+        else:
+            warnings.warn("Calibration image or lifetime not set.")
+            return
+    else:
+        # Use time mask if no calibration is applied
+        time_mask = make_time_mask(image, laser_frequency)
+        space_mask = make_space_mask_from_manual_threshold(image, threshold)
+        image_time_filtered = image[time_mask]
+        g, s, dc = get_phasor_components(image_time_filtered, harmonic=harmonic)
 
     if apply_median:
         g = apply_median_filter(g, median_n)
@@ -219,11 +251,11 @@ def make_flim_phasor_plot(
         # Update laser frequency spinbox
         # TO DO: access and update widget in a better way
         if (
-            "Calculate Phasors (napari-flim-phasor-plotter)"
+            "Calculate Phasors (FLIM phasor plotter)"
             in dock_widgets_names
         ):
             widgets = napari_viewer.window._dock_widgets[
-                "Calculate Phasors (napari-flim-phasor-plotter)"
+                "Calculate Phasors (FLIM phasor plotter)"
             ]
             laser_frequency_spinbox = (
                 widgets.children()[4].children()[2].children()[-1]

@@ -6,6 +6,9 @@ Call the plugin from the menu `Plugins > FLIM phasor plotter > Calculate Phasors
 
 ![phasor_calculation](../images/calculate_phasors.gif)
 
+If a calibration sample with known lifetime is available, optionally load it as a napari layer and check the apply calibration checkbox to have access to a field to write the lifetime value and apply it. Click on `Run` again to apply the calibration.
+
+
 ## Phasor Plot Navigation
 
  Use the toolbar on top of the plot to navigate through the plot. For example, by activating the zoom tool button (magnifying glass icon), you can zoom in (with left click) or out (with right click), just *remember to disbale the zoom tool after using it by clicking on the icon once again*.
