@@ -40,6 +40,33 @@ table = pd.DataFrame(
         "frame": [0, 0, 0, 0, 0, 0, 0],
     }
 )
+table_calibrated = pd.DataFrame(
+    {
+        "label": [1, 2, 3, 4, 5, 6, 7],
+        "G": [
+            0.984451, 
+            0.940585, 
+            0.798299, 
+            0.387727, 
+            0.136677,
+            0.024705, 
+            0.009798,
+    ],
+        "S": [
+            0.123733, 
+            0.236405, 
+            0.401272, 
+            0.487231, 
+            0.343505,
+            0.155223, 
+            0.098497,
+        ],
+        "pixel_x_coordinates": [2, 0, 1, 2, 0, 1, 2],
+        "pixel_y_coordinates": [0, 1, 1, 1, 2, 2, 2],
+        "pixel_z_coordinates": [0, 0, 0, 0, 0, 0, 0],
+        "frame": [0, 0, 0, 0, 0, 0, 0],
+    }
+)
 
 labelled_pixels_masked = np.array(
     [
@@ -179,6 +206,50 @@ def test_manual_label_extract():
     assert np.array_equal(
         selected_label_layer.data, output_selected_cluster_labels
     )
+
+
+def test_make_flim_phasor_plot_with_calibration(make_napari_viewer):
+    lifetime_cal = 4  # ns
+
+    viewer = make_napari_viewer()
+
+    number_of_time_points = 1000
+
+    time_array = _create_time_array(laser_frequency, number_of_time_points)
+
+    cal_flim_data = _make_synthetic_flim_data(time_array, amplitude, lifetime_cal)
+    cal_flim_data = np.repeat(cal_flim_data[:, np.newaxis], 9, axis=1)
+    cal_flim_data = cal_flim_data.reshape(number_of_time_points, 3, 3)
+    cal_flim_data = np.expand_dims(
+        cal_flim_data, axis=[1, 2]
+    )  # add unitary time and z dimensions
+
+
+    flim_data = _make_synthetic_flim_data(time_array, amplitude, tau_list)
+    flim_data = flim_data.reshape(number_of_time_points, 3, 3)
+    flim_data = np.expand_dims(
+        flim_data, axis=[1, 2]
+    )  # add unitary time and z dimensions
+
+    flim_layer = viewer.add_image(flim_data, rgb=False)
+    calibration_flim_layer = viewer.add_image(cal_flim_data, rgb=False)
+
+    # create the widget
+    my_widget = make_flim_phasor_plot(
+        image_layer={'value': flim_layer},
+        laser_frequency={'value': laser_frequency},
+        apply_calibration={'value': True},
+        calibration_lifetime={'value': lifetime_cal},
+        calibration_image_layer={'value': calibration_flim_layer},
+    )
+
+    # execute function
+    plotter_widget, labels_layer = my_widget()
+
+    assert np.allclose(
+        labels_layer.features.values, table_calibrated.values, rtol=0, atol=1e-5
+    )
+
 
 
 def test_get_n_largest_cluster_labels():
