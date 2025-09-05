@@ -31,6 +31,7 @@ def _connect_events(widget):
     widget.laser_frequency.label = "Laser Frequency (MHz)"
     widget.calibration_image_layer.visible = False
     widget.calibration_lifetime.visible = False
+    widget.calibration_lifetime.label = "Calibration Lifetime (ns)"
 
 
 @magic_factory(
